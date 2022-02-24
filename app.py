@@ -24,7 +24,7 @@ app.secret_key = 'super secret string'  # Change this!
 #These will need to be changed according to your creditionals
 app.config['MYSQL_DATABASE_USER'] = 'root'
 app.config['MYSQL_DATABASE_PASSWORD'] = 'MySQLPass420!'
-app.config['MYSQL_DATABASE_DB'] = 'photoshare'
+app.config['MYSQL_DATABASE_DB'] = 'photoshareTEST2'
 app.config['MYSQL_DATABASE_HOST'] = 'localhost'
 mysql.init_app(app)
 
@@ -34,12 +34,12 @@ login_manager.init_app(app)
 
 conn = mysql.connect()
 cursor = conn.cursor()
-cursor.execute("SELECT email from Users")
+cursor.execute("SELECT email from User")
 users = cursor.fetchall()
 
 def getUserList():
 	cursor = conn.cursor()
-	cursor.execute("SELECT email from Users")
+	cursor.execute("SELECT email from User")
 	return cursor.fetchall()
 
 class User(flask_login.UserMixin):
@@ -63,7 +63,7 @@ def request_loader(request):
 	user = User()
 	user.id = email
 	cursor = mysql.connect().cursor()
-	cursor.execute("SELECT password FROM Users WHERE email = '{0}'".format(email))
+	cursor.execute("SELECT password FROM User WHERE email = '{0}'".format(email))
 	data = cursor.fetchall()
 	pwd = str(data[0][0] )
 	user.is_authenticated = request.form['password'] == pwd
@@ -91,7 +91,7 @@ def login():
 	email = flask.request.form['email']
 	cursor = conn.cursor()
 	#check if email is registered
-	if cursor.execute("SELECT password FROM Users WHERE email = '{0}'".format(email)):
+	if cursor.execute("SELECT password FROM User WHERE email = '{0}'".format(email)):
 		data = cursor.fetchall()
 		pwd = str(data[0][0] )
 		if flask.request.form['password'] == pwd:
@@ -129,7 +129,7 @@ def register_user():
 	cursor = conn.cursor()
 	test =  isEmailUnique(email)
 	if test:
-		print(cursor.execute("INSERT INTO Users (email, password) VALUES ('{0}', '{1}')".format(email, password)))
+		print(cursor.execute("INSERT INTO User (email, password) VALUES ('{0}', '{1}')".format(email, password)))
 		conn.commit()
 		#log user in
 		user = User()
@@ -147,13 +147,13 @@ def getUsersPhotos(uid):
 
 def getUserIdFromEmail(email):
 	cursor = conn.cursor()
-	cursor.execute("SELECT user_id  FROM Users WHERE email = '{0}'".format(email))
+	cursor.execute("SELECT user_id  FROM User WHERE email = '{0}'".format(email))
 	return cursor.fetchone()[0]
 
 def isEmailUnique(email):
 	#use this to check if a email has already been registered
 	cursor = conn.cursor()
-	if cursor.execute("SELECT email  FROM Users WHERE email = '{0}'".format(email)):
+	if cursor.execute("SELECT email  FROM User WHERE email = '{0}'".format(email)):
 		#this means there are greater than zero entries with that email
 		return False
 	else:
