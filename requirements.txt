@@ -6,3 +6,4 @@ requests
 Werkzeug
 cryptography
 python-dotenv
+Flask-Datepicker

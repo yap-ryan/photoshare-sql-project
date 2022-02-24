@@ -9,6 +9,7 @@
 # see links for further understanding
 ###################################################
 
+from os import environ
 import flask
 from flask import Flask, Response, request, render_template, redirect, url_for
 from flaskext.mysql import MySQL
@@ -22,10 +23,10 @@ app = Flask(__name__)
 app.secret_key = 'super secret string'  # Change this!
 
 #These will need to be changed according to your creditionals
-app.config['MYSQL_DATABASE_USER'] = 'root'
-app.config['MYSQL_DATABASE_PASSWORD'] = 'MySQLPass420!'
-app.config['MYSQL_DATABASE_DB'] = 'photoshareTEST2'
-app.config['MYSQL_DATABASE_HOST'] = 'localhost'
+app.config['MYSQL_DATABASE_USER'] = environ.get('MYSQL_DATABASE_USER')
+app.config['MYSQL_DATABASE_PASSWORD'] = environ.get('MYSQL_DATABASE_PASSWORD')
+app.config['MYSQL_DATABASE_DB'] = environ.get('MYSQL_DATABASE_DB')
+app.config['MYSQL_DATABASE_HOST'] = environ.get('MYSQL_DATABASE_HOST')
 mysql.init_app(app)
 
 #begin code used for login
@@ -121,15 +122,20 @@ def register():
 @app.route("/register", methods=['POST'])
 def register_user():
 	try:
+		first_name=request.form.get('first_name')
+		last_name=request.form.get('last_name')
 		email=request.form.get('email')
 		password=request.form.get('password')
+		gender=request.form.get('gender')
+		date_of_birth=request.form.get('date_of_birth')
+		hometown=request.form.get('hometown')
 	except:
 		print("couldn't find all tokens") #this prints to shell, end users will not see this (all print statements go to shell)
 		return flask.redirect(flask.url_for('register'))
 	cursor = conn.cursor()
 	test =  isEmailUnique(email)
 	if test:
-		print(cursor.execute("INSERT INTO User (email, password) VALUES ('{0}', '{1}')".format(email, password)))
+		print(cursor.execute("INSERT INTO User (first_name, last_name, email, password, gender, date_of_birth, hometown, contribution_score) VALUES ('{0}', '{1}', '{2}', '{3}', '{4}', '{5}', '{6}', 0)".format(first_name, last_name, email, password, gender, date_of_birth, hometown)))
 		conn.commit()
 		#log user in
 		user = User()
@@ -137,7 +143,7 @@ def register_user():
 		flask_login.login_user(user)
 		return render_template('hello.html', name=email, message='Account Created!')
 	else:
-		print("couldn't find all tokens")
+		print("email not unique")
 		return flask.redirect(flask.url_for('register'))
 
 def getUsersPhotos(uid):
@@ -147,13 +153,13 @@ def getUsersPhotos(uid):
 
 def getUserIdFromEmail(email):
 	cursor = conn.cursor()
-	cursor.execute("SELECT user_id  FROM User WHERE email = '{0}'".format(email))
+	cursor.execute("SELECT user_id FROM User WHERE email = '{0}'".format(email))
 	return cursor.fetchone()[0]
 
 def isEmailUnique(email):
 	#use this to check if a email has already been registered
 	cursor = conn.cursor()
-	if cursor.execute("SELECT email  FROM User WHERE email = '{0}'".format(email)):
+	if cursor.execute("SELECT email FROM User WHERE email = '{0}'".format(email)):
 		#this means there are greater than zero entries with that email
 		return False
 	else:
