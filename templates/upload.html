@@ -7,6 +7,16 @@
             <h1>Upload a photo to Photoshare</h1>
         </div>
             <form method="post" enctype="multipart/form-data" action="/upload">
+                <label for="album">Select an Album:</label>
+
+                <select name="album" id="album">
+                
+                    {% for album in album_list %}
+                        <option value="{{ album }}">{{ album }}</option>
+                    {% endfor %}
+
+                </select>
+
                 <label for="photo">Select photo:</label>
                 <input type="file" name="photo" required='true' /><br />
                 <label for="caption">Please caption:</label>
