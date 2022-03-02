@@ -35,12 +35,12 @@ login_manager.init_app(app)
 
 conn = mysql.connect()
 cursor = conn.cursor()
-cursor.execute("SELECT email from User")
+cursor.execute("SELECT email from Users")
 users = cursor.fetchall()
 
 def getUserList():
 	cursor = conn.cursor()
-	cursor.execute("SELECT email from User")
+	cursor.execute("SELECT email from Users")
 	return cursor.fetchall()
 
 class User(flask_login.UserMixin):
@@ -64,7 +64,7 @@ def request_loader(request):
 	user = User()
 	user.id = email
 	cursor = mysql.connect().cursor()
-	cursor.execute("SELECT password FROM User WHERE email = '{0}'".format(email))
+	cursor.execute("SELECT password FROM Users WHERE email = '{0}'".format(email))
 	data = cursor.fetchall()
 	pwd = str(data[0][0] )
 	user.is_authenticated = request.form['password'] == pwd
@@ -84,7 +84,7 @@ def login():
 			   	<form action='login' method='POST'>
 					<input type='text' name='email' id='email' placeholder='email'></input>
 					<input type='password' name='password' id='password' placeholder='password'></input>
-					<input type='submit' name='submit'></input>
+					<input type='submit' name='submit' value='Submit'></input>
 			   	</form></br>
 		   		<a href='/'>Home</a>
 			   '''
@@ -92,7 +92,7 @@ def login():
 	email = flask.request.form['email']
 	cursor = conn.cursor()
 	#check if email is registered
-	if cursor.execute("SELECT password FROM User WHERE email = '{0}'".format(email)):
+	if cursor.execute("SELECT password FROM Users WHERE email = '{0}'".format(email)):
 		data = cursor.fetchall()
 		pwd = str(data[0][0] )
 		if flask.request.form['password'] == pwd:
@@ -135,7 +135,7 @@ def register_user():
 	cursor = conn.cursor()
 	test =  isEmailUnique(email)
 	if test:
-		print(cursor.execute("INSERT INTO User (first_name, last_name, email, password, gender, date_of_birth, hometown, contribution_score) VALUES ('{0}', '{1}', '{2}', '{3}', '{4}', '{5}', '{6}', 0)".format(first_name, last_name, email, password, gender, date_of_birth, hometown)))
+		print(cursor.execute("INSERT INTO Users (first_name, last_name, email, password, gender, date_of_birth, hometown, contribution_score) VALUES ('{0}', '{1}', '{2}', '{3}', '{4}', '{5}', '{6}', 0)".format(first_name, last_name, email, password, gender, date_of_birth, hometown)))
 		conn.commit()
 		#log user in
 		user = User()
@@ -148,18 +148,18 @@ def register_user():
 
 def getUsersPhotos(uid):
 	cursor = conn.cursor()
-	cursor.execute("SELECT imgdata, picture_id, caption FROM Pictures WHERE user_id = '{0}'".format(uid))
+	cursor.execute("SELECT imgdata, picture_id, caption FROM Photos WHERE user_id = '{0}'".format(uid))
 	return cursor.fetchall() #NOTE return a list of tuples, [(imgdata, pid, caption), ...]
 
 def getUserIdFromEmail(email):
 	cursor = conn.cursor()
-	cursor.execute("SELECT user_id FROM User WHERE email = '{0}'".format(email))
+	cursor.execute("SELECT user_id FROM Users WHERE email = '{0}'".format(email))
 	return cursor.fetchone()[0]
 
 def isEmailUnique(email):
 	#use this to check if a email has already been registered
 	cursor = conn.cursor()
-	if cursor.execute("SELECT email FROM User WHERE email = '{0}'".format(email)):
+	if cursor.execute("SELECT email FROM Users WHERE email = '{0}'".format(email)):
 		#this means there are greater than zero entries with that email
 		return False
 	else:
@@ -170,6 +170,50 @@ def isEmailUnique(email):
 @flask_login.login_required
 def protected():
 	return render_template('hello.html', name=flask_login.current_user.id, message="Here's your profile")
+
+
+
+# FRIENDS FUNCTIONALITY CODE HERE
+@app.route('/friends')
+@flask_login.login_required
+def friends():
+	return render_template('friends.html', name=flask_login.current_user.id)
+
+
+@app.route("/search_users", methods=['GET'])
+def search_users():
+    return render_template('search_users.html')
+
+@app.route("/search_users", methods=['POST'])
+def search():
+    first_name = request.form.get('first_name')
+    users = searchUsersByFirstName(first_name)
+         	
+    return render_template('search_users.html', users=users)
+
+def searchUsersByFirstName(first_name):
+    cursor = conn.cursor()
+    cursor.execute("SELECT user_id, first_name, last_name, gender, hometown FROM Users WHERE first_name = '{0}'".format(first_name))
+    return cursor.fetchall()
+
+@app.route("/add_friend")
+def add_friend():
+    args = request.args
+    addressee_id = args.get('addressee_id')
+    addressee_first_name = args.get('addressee_first_name')
+    requestor_id = flask_login.current_user.
+    
+    print('works ' + requestor_id)
+    cursor = conn.cursor()
+    print(cursor.execute("INSERT INTO Friendships (requestor_id, addressee_id) VALUES ({0}, {1})".format(requestor_id, addressee_id)))
+    conn.commit()
+
+    return render_template('friends.html', name=flask_login.current_user.id, message=addressee_first_name + ' added as Friend!')
+
+
+#End Friends code
+
+
 
 #begin photo uploading code
 # photos uploaded using base64 encoding so they can be directly embeded in HTML
@@ -186,7 +230,7 @@ def upload_file():
 		caption = request.form.get('caption')
 		photo_data =imgfile.read()
 		cursor = conn.cursor()
-		cursor.execute('''INSERT INTO Pictures (imgdata, user_id, caption) VALUES (%s, %s, %s )''', (photo_data, uid, caption))
+		cursor.execute('''INSERT INTO Photos (imgdata, user_id, caption) VALUES (%s, %s, %s )''', (photo_data, uid, caption))
 		conn.commit()
 		return render_template('hello.html', name=flask_login.current_user.id, message='Photo uploaded!', photos=getUsersPhotos(uid), base64=base64)
 	#The method is GET so we return a  HTML form to upload the a photo.
