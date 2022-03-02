@@ -52,7 +52,7 @@ def user_loader(email):
 	if not(email) or email not in str(users):
 		return
 	user = User()
-	user.id = email
+	user.email = email
 	return user
 
 @login_manager.request_loader
@@ -62,7 +62,7 @@ def request_loader(request):
 	if not(email) or email not in str(users):
 		return
 	user = User()
-	user.id = email
+	user.email = email
 	cursor = mysql.connect().cursor()
 	cursor.execute("SELECT password FROM Users WHERE email = '{0}'".format(email))
 	data = cursor.fetchall()
@@ -97,7 +97,7 @@ def login():
 		pwd = str(data[0][0] )
 		if flask.request.form['password'] == pwd:
 			user = User()
-			user.id = email
+			user.email = email
 			flask_login.login_user(user) #okay login in user
 			return flask.redirect(flask.url_for('protected')) #protected is a function defined in this file
 
@@ -139,9 +139,9 @@ def register_user():
 		conn.commit()
 		#log user in
 		user = User()
-		user.id = email
+		user.email = email
 		flask_login.login_user(user)
-		return render_template('hello.html', name=email, message='Account Created!')
+		return render_template('hello.html', email=email, message='Account Created!')
 	else:
 		print("email not unique")
 		return flask.redirect(flask.url_for('register'))
@@ -169,7 +169,7 @@ def isEmailUnique(email):
 @app.route('/profile')
 @flask_login.login_required
 def protected():
-	return render_template('hello.html', name=flask_login.current_user.id, message="Here's your profile")
+	return render_template('hello.html', email=flask_login.current_user.email, message="Here's your profile")
 
 
 
@@ -177,8 +177,9 @@ def protected():
 @app.route('/friends')
 @flask_login.login_required
 def friends():
-	return render_template('friends.html', name=flask_login.current_user.id)
-
+    uid = getUserIdFromEmail(flask_login.current_user.email)
+    friends_list = getFriends(uid)
+    return render_template('friends.html', friends_list=friends_list)
 
 @app.route("/search_users", methods=['GET'])
 def search_users():
@@ -187,29 +188,34 @@ def search_users():
 @app.route("/search_users", methods=['POST'])
 def search():
     first_name = request.form.get('first_name')
-    users = searchUsersByFirstName(first_name)
+    users = searchOtherUsersByFirstName(first_name)
          	
     return render_template('search_users.html', users=users)
 
-def searchUsersByFirstName(first_name):
-    cursor = conn.cursor()
-    cursor.execute("SELECT user_id, first_name, last_name, gender, hometown FROM Users WHERE first_name = '{0}'".format(first_name))
-    return cursor.fetchall()
-
+# Takes a user's id and first name as args
 @app.route("/add_friend")
 def add_friend():
     args = request.args
     addressee_id = args.get('addressee_id')
     addressee_first_name = args.get('addressee_first_name')
-    requestor_id = flask_login.current_user.
+    requestor_id = getUserIdFromEmail(flask_login.current_user.email)
     
-    print('works ' + requestor_id)
     cursor = conn.cursor()
     print(cursor.execute("INSERT INTO Friendships (requestor_id, addressee_id) VALUES ({0}, {1})".format(requestor_id, addressee_id)))
     conn.commit()
 
-    return render_template('friends.html', name=flask_login.current_user.id, message=addressee_first_name + ' added as Friend!')
+    return render_template('friends.html', message=addressee_first_name + ' added as Friend!')
 
+def getFriends(uid):
+    cursor = conn.cursor()
+    cursor.execute("SELECT user_id, first_name, last_name, gender, hometown, email FROM Users WHERE user_id IN (SELECT addressee_id FROM Friendships WHERE requestor_id = {0});".format(uid))
+    return cursor.fetchall()
+
+def searchOtherUsersByFirstName(first_name):
+    curr_user_id = getUserIdFromEmail(flask_login.current_user.email)
+    cursor = conn.cursor()
+    cursor.execute("SELECT user_id, first_name, last_name, gender, hometown FROM Users WHERE first_name LIKE '{0}%' AND user_id <> {1}".format(first_name, curr_user_id))
+    return cursor.fetchall()
 
 #End Friends code
 
@@ -225,14 +231,14 @@ def allowed_file(filename):
 @flask_login.login_required
 def upload_file():
 	if request.method == 'POST':
-		uid = getUserIdFromEmail(flask_login.current_user.id)
+		uid = getUserIdFromEmail(flask_login.current_user.email)
 		imgfile = request.files['photo']
 		caption = request.form.get('caption')
 		photo_data =imgfile.read()
 		cursor = conn.cursor()
 		cursor.execute('''INSERT INTO Photos (imgdata, user_id, caption) VALUES (%s, %s, %s )''', (photo_data, uid, caption))
 		conn.commit()
-		return render_template('hello.html', name=flask_login.current_user.id, message='Photo uploaded!', photos=getUsersPhotos(uid), base64=base64)
+		return render_template('hello.html', email=flask_login.current_user.email, message='Photo uploaded!', photos=getUsersPhotos(uid), base64=base64)
 	#The method is GET so we return a  HTML form to upload the a photo.
 	else:
 		return render_template('upload.html')

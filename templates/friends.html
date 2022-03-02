@@ -6,12 +6,54 @@
         <h1>Your Friends</h1>
     </div>
     <div>
-        <a href='/search_users'>Search for Friends</a>
-
         {% if message %}
             <h4>{{message}}</h4>
         {% endif %}
+
+        {% if friends_list %}
+            <table style="margin-left: 20px;">
+                <th>
+                    <tr style="color: green;"> 
+                        <td>User ID</td>   
+                        <td>First Name</td>
+                        <td>Last Name</td>
+                        <td>Gender</td>
+                        <td>Hometown</td>
+                        <td>Email</td>
+                    </tr>
+                </th>
+
+            {% for user in friends_list %}
+            <tr>
+                <td>{{ user[0] }}</td>
+                <td>{{ user[1] }}</td>
+                <td>{{ user[2] }}</td>
+                <td>{{ user[3] }}</td>
+                <td>{{ user[4] }}</td>
+                <td>{{ user[5] }}</td>
+            </tr>
+            {%endfor%}
+        {% endif %}
         
     </div>
+
+    <ul>
+        <li><a href='/search_users'>Search for Friends</a></li>
+        <li><a href='/'>Home</a></li>
+    </ul>
+
 </body>
-<a href='/'>Home</a>
+
+<style type="text/css">
+    th:tr{
+        color: blue;
+    }
+    tr:nth-of-type(2n){
+        border: 1px solid black;
+        background-color: rgba(224, 224, 224, 0.5);
+    }
+    td{
+        padding: 8px 8px;
+        border: 1px solid black;
+    }
+</style>
