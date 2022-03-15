@@ -151,7 +151,7 @@ def getUsersPhotos(uid):
 
 def getUsersAlbums(uid):
 	cursor = conn.cursor()
-	cursor.execute("SELECT name FROM Album WHERE user_id = '{0}'".format(uid))
+	cursor.execute("SELECT album_name FROM Album WHERE user_id = '{0}'".format(uid))
 	return cursor.fetchall()  #return list of all of the albums owned by that user 
 
 def getUserIdFromEmail(email):
@@ -192,8 +192,7 @@ def upload_file():
 
 
 	uid = getUserIdFromEmail(flask_login.current_user.id)
-	# album_list = getUsersAlbums(uid)
-	album_list = [1,2,3,4]
+	album_list = getUsersAlbums(uid)
 
 	if request.method == 'POST':
 		imgfile = request.files['photo']
@@ -201,6 +200,8 @@ def upload_file():
 		photo_data =imgfile.read()
 		cursor = conn.cursor()
 		albumname = request.form.get('albumname')
+		createalbum = request.form.get('createalbum')
+		selectalbum = request.form.get('selectalbum')
 		date = request.form.get('date')
 		likes = 0
 
@@ -222,15 +223,6 @@ def upload_file():
 		return render_template('upload.html', album_list = album_list)
 #end photo uploading code
 
-
-# begin creating ablum code 
-
-
-
-
-
-
-# end creating album code 
 
 
 
