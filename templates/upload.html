@@ -7,15 +7,32 @@
             <h1>Upload a photo to Photoshare</h1>
         </div>
             <form method="post" enctype="multipart/form-data" action="/upload">
-                <label for="album">Select an Album:</label>
+                
+                
+                <!-- <label for="createalbum">Create An Album:</label>
 
-                <select name="album" id="album">
+                <select name="createalbum" id="createalbum">
+                    <option value="yes">Yes</option>
+                    <option value="no">No</option>
+                </select> -->
+
+
+                <label for="albumname">Album Name:</label>
+                <input type="text" name="albumname" required='true' /><br />
+
+
+                <!-- <label for="selectalbum">Select an Album:</label>
+
+                <select name="selectalbum" id="selectalbum">
                 
                     {% for album in album_list %}
                         <option value="{{ album }}">{{ album }}</option>
                     {% endfor %}
 
-                </select>
+                </select> -->
+
+                <label for="date">Date:</label>
+                <input type="date" name="date" required='true' /><br />
 
                 <label for="photo">Select photo:</label>
                 <input type="file" name="photo" required='true' /><br />
