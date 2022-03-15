@@ -58,6 +58,7 @@ def user_loader(email):
     if not(email) or email not in str(users):
         return
     user = User()
+    user.id = email
     user.email = email
     return user
 
@@ -69,6 +70,7 @@ def request_loader(request):
     if not(email) or email not in str(users):
         return
     user = User()
+    user.id = email
     user.email = email
     cursor = mysql.connect().cursor()
     cursor.execute(
@@ -107,6 +109,7 @@ def login():
         pwd = str(data[0][0])
         if flask.request.form['password'] == pwd:
             user = User()
+            user.id = email
             user.email = email
             flask_login.login_user(user)  # okay login in user
             # protected is a function defined in this file
@@ -157,6 +160,7 @@ def register_user():
         conn.commit()
         # log user in
         user = User()
+        user.id = email
         user.email = email
         flask_login.login_user(user)
         return render_template('hello.html', email=email, message='Account Created!')
