@@ -1,32 +1,20 @@
 <!-- author ben lawson (balawson@bu.edu) -->
+
 <head>
-    <title>Upload a photo!</title>
+    <title>Upload a photo to Album!</title>
 </head>
     <body>
         <div class="title">
             <h1>Upload a photo to Photoshare</h1>
         </div>
             <form method="post" enctype="multipart/form-data" action="/upload">
-                
-                
-                <!-- <label for="createalbum">Create An Album:</label>
-
-                <select name="createalbum" id="createalbum">
-                    <option value="yes">Yes</option>
-                    <option value="no">No</option>
-                </select> -->
-
-
-                <label for="albumname">Album Name:</label>
-                <input type="text" name="albumname" required='true' /><br />
-
 
                 <label for="selectalbum">Select an Album:</label>
 
                 <select name="selectalbum" id="selectalbum">
                 
                     {% for album in album_list %}
-                        <option value="{{ album }}">{{ album }}</option>
+                        <option value={{album[0]}}>{{album[0]}}</option>
                     {% endfor %}
 
                 </select>
@@ -41,3 +29,4 @@
                 <input type="submit" value="Upload" />
             </form>
     </body>
+

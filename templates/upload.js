@@ -1,11 +1,11 @@
 $(document).ready(function() {
-    var $createalbum = $("#column_select"),
-      $albumname = $("#layout_select");
+    var $createalbum = $("#createalbum"),
+      $albumname = $("#albumname");
   
-    $city.hide();
+    $albumname.hide();
   
     $createalbum.on('change', function() {
-      if ($(this).val() == "col0") {
+      if (($(this).val() == "col0") || ($(this).val() == "col2")) {
         $albumname.hide();
       } else {
         $albumname.show();
@@ -13,3 +13,4 @@ $(document).ready(function() {
     });
   
   })
+

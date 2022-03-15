@@ -199,21 +199,10 @@ def upload_file():
 		caption = request.form.get('caption')
 		photo_data =imgfile.read()
 		cursor = conn.cursor()
-		albumname = request.form.get('albumname')
-		createalbum = request.form.get('createalbum')
-		selectalbum = request.form.get('selectalbum')
-		date = request.form.get('date')
+		albumname = request.form.get('selectalbum')
 		likes = 0
 
-
-		cursor.execute('''INSERT INTO Album (album_name, creation_date, user_id) VALUES (%s, %s, %s )''', (albumname, date, uid))
 		album_id = getAlbumIdFromName(albumname)		
-
-		# if (createalbum == 'yes') : # a new album was created so need to insert the album info
-		# 	album_id = getAlbumIdFromName(albumname)
-		# 	cursor.execute('''INSERT INTO Album (album_name, creation_date, user_id) VALUES (%s, %s, %s )''', (albumname, date, uid))
-		# else : # album was selected from list
-		# 	album_id = getAlbumIdFromName(flask_login.current_user.id)
 		cursor.execute('''INSERT INTO Photo (data, caption, album_id, user_id, likes) VALUES (%s, %s ,%s,%s, %s)''', (photo_data, caption, album_id, uid, likes))
 		conn.commit()
 		return render_template('hello.html', name=flask_login.current_user.id, message='Photo uploaded!', photos=getUsersPhotos(uid), base64=base64)
@@ -222,6 +211,43 @@ def upload_file():
 	else:
 		return render_template('upload.html', album_list = album_list)
 #end photo uploading code
+
+
+
+
+#begin create new album code 
+
+ALLOWED_EXTENSIONS2 = set(['png', 'jpg', 'jpeg', 'gif'])
+def allowed_file(filename):
+	return '.' in filename and filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS2
+
+@app.route('/createalbum', methods=['GET', 'POST'])
+@flask_login.login_required
+def create_new_album():
+
+
+	uid = getUserIdFromEmail(flask_login.current_user.id)
+
+	if request.method == 'POST':
+		imgfile = request.files['photo']
+		caption = request.form.get('caption')
+		photo_data =imgfile.read()
+		cursor2 = conn.cursor()
+		createdalbum = request.form.get('albumname')
+		date = request.form.get('date')
+		likes = 0
+
+		cursor2.execute('''INSERT INTO Album (album_name, creation_date, user_id) VALUES (%s, %s, %s )''', (createdalbum, date, uid))
+		album_id = getAlbumIdFromName(createdalbum)		
+		cursor2.execute('''INSERT INTO Photo (data, caption, album_id, user_id, likes) VALUES (%s, %s ,%s,%s, %s)''', (photo_data, caption, album_id, uid, likes))
+		conn.commit()
+		return render_template('hello.html', name=flask_login.current_user.id, message='Photo uploaded!', photos=getUsersPhotos(uid), base64=base64)
+	
+	#The method is GET so we return a  HTML form to upload the a photo.
+	else:
+		return render_template('createalbum.html')
+
+#end create new album code 
 
 
 
@@ -238,41 +264,3 @@ if __name__ == "__main__":
 	#$ python app.py
 	app.run(port=5000, debug=True)
 
-
-
-
-
-
-
-
-
-
-
-	# uid = getUserIdFromEmail(flask_login.current_user.id)
-	# # album_list = [1,2,3,4]
-	# album_list = getUsersAlbums(uid)
-
-	# if request.method == 'POST':
-	# 	# createalbum = request.form.get('createalbum')
-	# 	imgfile = request.files['photo']
-	# 	caption = request.form.get('caption')
-	# 	photo_data =imgfile.read()
-	# 	# date = request.form.get('date')
-	# 	# albumname = request.form.get('albumname')
-	# 	# selectalbum = request.form.get('selectalbum')
-	# 	# album_id = 0
-	# 	cursor = conn.cursor()
-
-	# 	# if (createalbum == 'yes') : # a new album was created so need to insert the album info
-	# 	# 	album_id = getAlbumIdFromName(albumname)
-	# 	# 	cursor.execute('''INSERT INTO Album (name, creation_date, user_id) VALUES (%s, %s, %s )''', (albumname, date, uid))
-	# 	# else : # album was selected from list
-	# 	# 	album_id = getAlbumIdFromName(selectalbum)
-
-	# 	cursor.execute('''INSERT INTO Photo (data, caption) VALUES (%s, %s )''', (photo_data, caption))
-	# 	conn.commit()
-	# 	return render_template('hello.html', name=flask_login.current_user.id, message='Photo uploaded!', photos=getUsersPhotos(uid), base64=base64)
-	
-	# #The method is GET so we return a  HTML form to upload the a photo.
-	# else:
-	# 	return render_template('upload.html', album_list = album_list)
