@@ -212,17 +212,18 @@ def friends():
 
 @app.route("/search_users", methods=['GET'])
 def search_users():
-    return render_template('search_users.html')
+    uid = getUserIdFromEmail(flask_login.current_user.email)
+    recommendation_ls = getFriendRecommendations(uid)
+
+    return render_template('search_users.html', rec_ls=recommendation_ls)
 
 
 @app.route("/search_users", methods=['POST'])
 def search():
     first_name = request.form.get('first_name')
     users = searchOtherUsersByFirstName(first_name)
-
+    
     return render_template('search_users.html', users=users)
-
-# Takes a user's id and first name as args
 
 
 @app.route("/add_friend")
@@ -236,14 +237,35 @@ def add_friend():
     print(cursor.execute("INSERT INTO Friendships (requestor_id, addressee_id) VALUES ({0}, {1})".format(
         requestor_id, addressee_id)))
     conn.commit()
-
-    return render_template('friends.html', message=addressee_first_name + ' added as Friend!')
+    
+    friends_list = getFriends(requestor_id)
+    
+    return render_template('friends.html', message=addressee_first_name + ' added as Friend!', friends_list=friends_list)
 
 
 def getFriends(uid):
     cursor = conn.cursor()
     cursor.execute(
         "SELECT user_id, first_name, last_name, gender, hometown, email FROM Users WHERE user_id IN (SELECT addressee_id FROM Friendships WHERE requestor_id = {0});".format(uid))
+    return cursor.fetchall()
+
+# Takes uid and returns a list of friends-of-friends(mutuals) who are not the current user or user's friends
+def getFriendRecommendations(uid):
+    cursor = conn.cursor()
+    cursor.execute(
+        '''
+        SELECT rec.mutual_id, f.first_name, f.last_name, COUNT(rec.mutual_id) AS shared_friends
+        FROM Users f, 
+            (SELECT f1.addressee_id AS friend_id, f2.addressee_id AS mutual_id
+            FROM (SELECT * FROM Friendships WHERE requestor_id = {0}) AS f1, Friendships f2
+            WHERE f2.requestor_id = f1.addressee_id 
+                AND f2.addressee_id NOT IN (SELECT addressee_id FROM Friendships WHERE requestor_id = {0})
+                AND f2.addressee_id <> {0}) AS rec
+        WHERE rec.mutual_id = f.user_id
+        GROUP BY rec.mutual_id
+        ORDER BY shared_friends DESC;
+        '''.format(uid))
+    
     return cursor.fetchall()
 
 

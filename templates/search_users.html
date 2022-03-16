@@ -2,6 +2,12 @@
     <title>Search Users</title>
 </head>
 <body>
+    <div>
+        <ul>
+            <li><a href='/friends'>Friends</a></li>
+        </ul>
+    </div>
+
     <div class="title">
         <h1>Search Users</h1>
     </div>
@@ -40,10 +46,35 @@
             {%endfor%}
         {% endif %}
     </div>
-    <ul>
-        <li><a href='/friends'>Friends</a></li>
-        <li><a href='/'>Home</a></li>
-    </ul>
+
+    <div>
+        {% if rec_ls %}
+            <h3>Friend Recommendations:</h3>
+
+            <table style="margin-left: 20px;">
+                <th>
+                    <tr style="color: rgb(119, 0, 255);"> 
+                        <td>User ID</td>   
+                        <td>First Name</td>
+                        <td>Last Name</td>
+                        <td># of Mutuals</td>
+                    </tr>
+                </th>
+
+            {% for rec in rec_ls %}
+            <tr>
+                <td>{{ rec[0] }}</td>
+                <td>{{ rec[1] }}</td>
+                <td>{{ rec[2] }}</td>
+                <td>{{ rec[3] }}</td>
+                <td>
+                    <a href="{{ url_for('add_friend', addressee_id = rec[0], addressee_first_name = rec[1])}}"> Add Friend</a>
+                </td>
+            </tr>
+            {%endfor%}
+        {% endif %}
+    </div>
+
 </body>
 
 <style type="text/css">
