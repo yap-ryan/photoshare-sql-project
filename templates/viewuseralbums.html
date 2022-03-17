@@ -1,0 +1,37 @@
+
+
+<!--shows all of the albums of the user and includes functionality where user can delete album  -->
+
+
+
+<head>
+    <title>View All of Your Albums</title>
+</head>
+<head>
+    <style>
+    a:link, a:visited {
+        background-color: #707070;
+        color: white;
+        padding: 14px 25px;
+        text-align: center;
+        text-decoration: none;
+        margin-top:10px;
+        margin-left: 10px;
+        display: inline-block;
+    }
+
+    a:hover, a:active {
+        background-color: black;
+    }
+    </style>
+</head>
+    <body>
+
+    {for album_name in usersAlbums}
+        <a href="viewonealbum.html" >album_name</a>
+    {endfor}
+
+    }
+
+    </body>
+    

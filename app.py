@@ -148,11 +148,23 @@ def getUsersPhotos(uid):
 	cursor.execute("SELECT data, photo_id, caption FROM Photo WHERE user_id = '{0}'".format(uid))
 	return cursor.fetchall() #NOTE return a list of tuples, [(imgdata, pid, caption), ...]
 
+def getAlbumsPhotos(albumid):
+	cursor = conn.cursor()
+	cursor.execute("SELECT data FROM Photo WHERE album_id = '{0}'".format(albumid))
+	return cursor.fetchall() #NOTE return a list of tuples, [(imgdata, pid, caption), ...]
+
 
 def getUsersAlbums(uid):
 	cursor = conn.cursor()
 	cursor.execute("SELECT album_name FROM Album WHERE user_id = '{0}'".format(uid))
 	return cursor.fetchall()  #return list of all of the albums owned by that user 
+
+
+def getAllUserIds():
+	cursor = conn.cursor()
+	cursor.execute("SELECT user_id FROM User")
+	return cursor.fetchall()  #return list of all of the user ids 
+
 
 def getUserIdFromEmail(email):
 	cursor = conn.cursor()
@@ -248,6 +260,67 @@ def create_new_album():
 		return render_template('createalbum.html')
 
 #end create new album code 
+
+
+
+#begin view all albums code 
+
+@app.route('/viewallalbums', methods=['GET', 'POST'])
+def viewAllAlbums(): 
+	user_id_list = getAllUserIds()
+	album_list_of_all_users = []
+
+	for x in user_id_list :
+
+		album_one_user = getUsersAlbums(x[0])
+		
+		for y in album_one_user : 
+			album_list_of_all_users.append(y)
+
+
+	return render_template('viewallalbums.html', album_list = album_list_of_all_users, user_list = user_id_list)
+
+
+#end view all albums code 
+
+
+
+# begin view one album code 
+
+@app.route('/viewonealbumunreg', methods=['GET', 'POST'])
+def viewonealbumunreg(): 
+
+	args = request.args 
+
+	album_name = args.get('album_name')
+	
+	album_id = getAlbumIdFromName(album_name)
+
+	photos = getAlbumsPhotos(album_id)
+	return render_template('viewonealbumunreg.html',  photos=photos, base64=base64)
+
+
+
+# end view one album code 
+
+
+
+
+
+# @app.route('/viewuseralbums', methods=['GET', 'POST'])
+# @flask_login.login_required
+# def viewUserAlbums():
+	
+
+
+
+
+#begin view user albums code 
+
+
+#begin view user albums code 
+
+
 
 
 

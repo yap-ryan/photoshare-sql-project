@@ -1,0 +1,34 @@
+
+
+<!-- shows all albums since they are public (unregistered and registered users can view these albums)
+#has NO delete functionality -->
+
+<head>
+    <title>View All of Your Albums</title>
+
+    <style>
+    a:link, a:visited {
+        background-color: #707070;
+        color: white;
+        padding: 14px 25px;
+        text-align: center;
+        text-decoration: none;
+        margin-top:10px;
+        margin-left: 10px;
+        display: inline-block;
+    }
+
+    a:hover, a:active {
+        background-color: black;
+    }
+    </style>
+</head>
+    <body>
+
+    {% for album_name in album_list %}
+        <a href= "{{ url_for('viewonealbumunreg', album_name = album_name) }}" >{{album_name[0]}}</a>
+    {% endfor %}
+
+    
+    </body>
+
