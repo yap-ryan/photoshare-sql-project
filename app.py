@@ -36,7 +36,7 @@ login_manager.init_app(app)
 
 conn = mysql.connect()
 cursor = conn.cursor()
-cursor.execute("SELECT email from User")
+cursor.execute("SELECT email from Users")
 users = cursor.fetchall()
 
 
@@ -171,7 +171,7 @@ def register_user():
 def getUsersPhotos(uid):
     cursor = conn.cursor()
     cursor.execute(
-        "SELECT imgdata, picture_id, caption FROM Photos WHERE user_id = '{0}'".format(uid))
+        "SELECT data, photo_id, caption FROM Photos WHERE user_id = '{0}'".format(uid))
     # NOTE return a list of tuples, [(imgdata, pid, caption), ...]
     return cursor.fetchall()
 
@@ -179,7 +179,7 @@ def getUsersPhotos(uid):
 
 def getUsersAlbums(uid):
 	cursor = conn.cursor()
-	cursor.execute("SELECT album_name FROM Album WHERE user_id = '{0}'".format(uid))
+	cursor.execute("SELECT album_name FROM Albums WHERE user_id = '{0}'".format(uid))
 	return cursor.fetchall()  #return list of all of the albums owned by that user 
 
 def getUserIdFromEmail(email):
@@ -191,7 +191,7 @@ def getUserIdFromEmail(email):
 
 def getAlbumIdFromName(name):
 	cursor = conn.cursor()
-	cursor.execute("SELECT album_id FROM ALbum WHERE album_name = '{0}'".format(name))
+	cursor.execute("SELECT album_id FROM Albums WHERE album_name = '{0}'".format(name))
 	return cursor.fetchone()[0]
 
 
@@ -312,10 +312,9 @@ def upload_file():
 		photo_data =imgfile.read()
 		cursor = conn.cursor()
 		albumname = request.form.get('selectalbum')
-		likes = 0
 
 		album_id = getAlbumIdFromName(albumname)		
-		cursor.execute('''INSERT INTO Photo (data, caption, album_id, user_id, likes) VALUES (%s, %s ,%s,%s, %s)''', (photo_data, caption, album_id, uid, likes))
+		cursor.execute('''INSERT INTO Photos (data, caption, album_id, user_id) VALUES (%s, %s ,%s, %s)''', (photo_data, caption, album_id, uid))
 		conn.commit()
 		return render_template('hello.html', name=flask_login.current_user.email, message='Photo uploaded!', photos=getUsersPhotos(uid), base64=base64)
 	
@@ -346,11 +345,10 @@ def create_new_album():
 		cursor2 = conn.cursor()
 		createdalbum = request.form.get('albumname')
 		date = request.form.get('date')
-		likes = 0
 
-		cursor2.execute('''INSERT INTO Album (album_name, creation_date, user_id) VALUES (%s, %s, %s )''', (createdalbum, date, uid))
+		cursor2.execute('''INSERT INTO Albums (album_name, creation_date, user_id) VALUES (%s, %s, %s )''', (createdalbum, date, uid))
 		album_id = getAlbumIdFromName(createdalbum)		
-		cursor2.execute('''INSERT INTO Photo (data, caption, album_id, user_id, likes) VALUES (%s, %s ,%s,%s, %s)''', (photo_data, caption, album_id, uid, likes))
+		cursor2.execute('''INSERT INTO Photos (data, caption, album_id, user_id) VALUES (%s, %s ,%s, %s)''', (photo_data, caption, album_id, uid))
 		conn.commit()
 		return render_template('hello.html', name=flask_login.current_user.email, message='Photo uploaded!', photos=getUsersPhotos(uid), base64=base64)
 	

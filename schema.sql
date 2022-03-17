@@ -33,7 +33,7 @@ CREATE TABLE Friendships(
 
 CREATE TABLE Albums(
     album_id INTEGER AUTO_INCREMENT, 
-    name VARCHAR(20), 
+    album_name VARCHAR(20) UNIQUE, 
     creation_date DATE, 
 
     user_id INTEGER NOT NULL, 
@@ -50,11 +50,15 @@ CREATE TABLE Photos(
     data longblob NOT NULL,
     caption VARCHAR(255),
     album_id INTEGER NOT NULL, 
+    user_id INTEGER NOT NULL,
+
 
     PRIMARY KEY (photo_id),
     FOREIGN KEY (album_id)
         REFERENCES Albums(album_id)
         ON DELETE CASCADE
+    FOREIGN KEY (user_id)
+        REFERENCES Users(user_id)
 );
 
 CREATE TABLE Likes(
