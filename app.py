@@ -112,8 +112,7 @@ def login():
             user.id = email
             user.email = email
             flask_login.login_user(user)  # okay login in user
-            # protected is a function defined in this file
-            return flask.redirect(flask.url_for('protected'))
+            return flask.redirect(flask.url_for('protected'))   # protected is a function defined in this file
 
     # information did not match
     return "<a href='/login'>Try again</a>\
@@ -172,16 +171,28 @@ def register_user():
 def getUsersPhotos(uid):
     cursor = conn.cursor()
     cursor.execute(
-        "SELECT imgdata, picture_id, caption FROM Photos WHERE user_id = '{0}'".format(uid))
+        "SELECT data, photo_id, caption FROM Photos WHERE user_id = '{0}'".format(uid))
     # NOTE return a list of tuples, [(imgdata, pid, caption), ...]
     return cursor.fetchall()
 
+
+
+def getUsersAlbums(uid):
+	cursor = conn.cursor()
+	cursor.execute("SELECT album_name FROM Albums WHERE user_id = '{0}'".format(uid))
+	return cursor.fetchall()  #return list of all of the albums owned by that user 
 
 def getUserIdFromEmail(email):
     cursor = conn.cursor()
     cursor.execute(
         "SELECT user_id FROM Users WHERE email = '{0}'".format(email))
     return cursor.fetchone()[0]
+
+
+def getAlbumIdFromName(name):
+	cursor = conn.cursor()
+	cursor.execute("SELECT album_id FROM Albums WHERE album_name = '{0}'".format(name))
+	return cursor.fetchone()[0]
 
 
 def isEmailUnique(email):
@@ -212,17 +223,18 @@ def friends():
 
 @app.route("/search_users", methods=['GET'])
 def search_users():
-    return render_template('search_users.html')
+    uid = getUserIdFromEmail(flask_login.current_user.email)
+    recommendation_ls = getFriendRecommendations(uid)
+
+    return render_template('search_users.html', rec_ls=recommendation_ls)
 
 
 @app.route("/search_users", methods=['POST'])
 def search():
     first_name = request.form.get('first_name')
     users = searchOtherUsersByFirstName(first_name)
-
+    
     return render_template('search_users.html', users=users)
-
-# Takes a user's id and first name as args
 
 
 @app.route("/add_friend")
@@ -236,14 +248,35 @@ def add_friend():
     print(cursor.execute("INSERT INTO Friendships (requestor_id, addressee_id) VALUES ({0}, {1})".format(
         requestor_id, addressee_id)))
     conn.commit()
-
-    return render_template('friends.html', message=addressee_first_name + ' added as Friend!')
+    
+    friends_list = getFriends(requestor_id)
+    
+    return render_template('friends.html', message=addressee_first_name + ' added as Friend!', friends_list=friends_list)
 
 
 def getFriends(uid):
     cursor = conn.cursor()
     cursor.execute(
         "SELECT user_id, first_name, last_name, gender, hometown, email FROM Users WHERE user_id IN (SELECT addressee_id FROM Friendships WHERE requestor_id = {0});".format(uid))
+    return cursor.fetchall()
+
+# Takes uid and returns a list of friends-of-friends(mutuals) who are not the current user or user's friends
+def getFriendRecommendations(uid):
+    cursor = conn.cursor()
+    cursor.execute(
+        '''
+        SELECT rec.mutual_id, f.first_name, f.last_name, COUNT(rec.mutual_id) AS shared_friends
+        FROM Users f, 
+            (SELECT f1.addressee_id AS friend_id, f2.addressee_id AS mutual_id
+            FROM (SELECT * FROM Friendships WHERE requestor_id = {0}) AS f1, Friendships f2
+            WHERE f2.requestor_id = f1.addressee_id 
+                AND f2.addressee_id NOT IN (SELECT addressee_id FROM Friendships WHERE requestor_id = {0})
+                AND f2.addressee_id <> {0}) AS rec
+        WHERE rec.mutual_id = f.user_id
+        GROUP BY rec.mutual_id
+        ORDER BY shared_friends DESC;
+        '''.format(uid))
+    
     return cursor.fetchall()
 
 
@@ -269,29 +302,74 @@ def allowed_file(filename):
 @app.route('/upload', methods=['GET', 'POST'])
 @flask_login.login_required
 def upload_file():
-    if request.method == 'POST':
-        uid = getUserIdFromEmail(flask_login.current_user.email)
-        imgfile = request.files['photo']
-        caption = request.form.get('caption')
-        photo_data = imgfile.read()
-        cursor = conn.cursor()
-        cursor.execute(
-            '''INSERT INTO Photos (imgdata, user_id, caption) VALUES (%s, %s, %s )''', (photo_data, uid, caption))
-        conn.commit()
-        return render_template('hello.html', email=flask_login.current_user.email, message='Photo uploaded!', photos=getUsersPhotos(uid), base64=base64)
-    # The method is GET so we return a  HTML form to upload the a photo.
-    else:
-        return render_template('upload.html')
-# end photo uploading code
+
+	uid = getUserIdFromEmail(flask_login.current_user.email)
+	album_list = getUsersAlbums(uid)
+
+	if request.method == 'POST':
+		imgfile = request.files['photo']
+		caption = request.form.get('caption')
+		photo_data =imgfile.read()
+		cursor = conn.cursor()
+		albumname = request.form.get('selectalbum')
+
+		album_id = getAlbumIdFromName(albumname)		
+		cursor.execute('''INSERT INTO Photos (data, caption, album_id, user_id) VALUES (%s, %s ,%s, %s)''', (photo_data, caption, album_id, uid))
+		conn.commit()
+		return render_template('hello.html', name=flask_login.current_user.email, message='Photo uploaded!', photos=getUsersPhotos(uid), base64=base64)
+	
+	#The method is GET so we return a  HTML form to upload the a photo.
+	else:
+		return render_template('upload.html', album_list = album_list)
+#end photo uploading code
 
 
-# default page
+
+
+#begin create new album code 
+
+ALLOWED_EXTENSIONS2 = set(['png', 'jpg', 'jpeg', 'gif'])
+def allowed_file(filename):
+	return '.' in filename and filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS2
+
+@app.route('/createalbum', methods=['GET', 'POST'])
+@flask_login.login_required
+def create_new_album():
+
+	uid = getUserIdFromEmail(flask_login.current_user.email)
+
+	if request.method == 'POST':
+		imgfile = request.files['photo']
+		caption = request.form.get('caption')
+		photo_data =imgfile.read()
+		cursor2 = conn.cursor()
+		createdalbum = request.form.get('albumname')
+		date = request.form.get('date')
+
+		cursor2.execute('''INSERT INTO Albums (album_name, creation_date, user_id) VALUES (%s, %s, %s )''', (createdalbum, date, uid))
+		album_id = getAlbumIdFromName(createdalbum)		
+		cursor2.execute('''INSERT INTO Photos (data, caption, album_id, user_id) VALUES (%s, %s ,%s, %s)''', (photo_data, caption, album_id, uid))
+		conn.commit()
+		return render_template('hello.html', name=flask_login.current_user.email, message='Photo uploaded!', photos=getUsersPhotos(uid), base64=base64)
+	
+	#The method is GET so we return a  HTML form to upload the a photo.
+	else:
+		return render_template('createalbum.html')
+
+#end create new album code 
+
+
+
+
+
+#default page
 @app.route("/", methods=['GET'])
 def hello():
-    return render_template('hello.html', message='Welecome to Photoshare')
+	return render_template('hello.html', message='Welcome to Photoshare')
 
 
 if __name__ == "__main__":
-    # this is invoked when in the shell  you run
-    # $ python app.py
-    app.run(port=5000, debug=True)
+	#this is invoked when in the shell  you run
+	#$ python app.py
+	app.run(port=5000, debug=True)
+
