@@ -27,11 +27,10 @@
 </head>
     <body>
 
-    {for album_name in usersAlbums}
-        <a href="viewonealbum.html" >album_name</a>
-    {endfor}
-
-    }
+ 
+    {% for album_name in album_list %}
+        <a href= "{{ url_for('viewonealbumuser', album_name = album_name) }}" >{{album_name[0]}}</a>
+    {% endfor %}
 
     </body>
     

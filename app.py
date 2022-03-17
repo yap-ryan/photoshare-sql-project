@@ -285,7 +285,7 @@ def viewAllAlbums():
 
 
 
-# begin view one album code 
+# begin view one album for unregistered user code 
 
 @app.route('/viewonealbumunreg', methods=['GET', 'POST'])
 def viewonealbumunreg(): 
@@ -299,29 +299,41 @@ def viewonealbumunreg():
 	photos = getAlbumsPhotos(album_id)
 	return render_template('viewonealbumunreg.html',  photos=photos, base64=base64)
 
-
-
-# end view one album code 
-
+# end view one album for unregistered user code 
 
 
 
 
-# @app.route('/viewuseralbums', methods=['GET', 'POST'])
-# @flask_login.login_required
-# def viewUserAlbums():
+#begin view user albums code 
+
+@app.route('/viewuseralbums', methods=['GET', 'POST'])
+@flask_login.login_required
+def viewUserAlbums(): 
+	uid = getUserIdFromEmail(flask_login.current_user.id)
+	albums = getUsersAlbums(uid)
+
+	return render_template('viewuseralbums.html', album_list = albums)
+
+
+#begin view user albums code 
+
+
+
+# begin view one album for registered user code 
+
+@app.route('/viewonealbumuser', methods=['GET', 'POST'])
+def viewonealbumuser(): 
+
+	args = request.args 
+
+	album_name = args.get('album_name')
 	
+	album_id = getAlbumIdFromName(album_name)
 
+	photos = getAlbumsPhotos(album_id)
+	return render_template('viewonealbumunreg.html',  photos=photos, base64=base64)
 
-
-
-#begin view user albums code 
-
-
-#begin view user albums code 
-
-
-
+# end view one album for registered user code 
 
 
 
