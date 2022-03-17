@@ -1,0 +1,93 @@
+<head>
+    <title>Search Users</title>
+</head>
+<body>
+    <div>
+        <ul>
+            <li><a href='/friends'>Friends</a></li>
+        </ul>
+    </div>
+
+    <div class="title">
+        <h1>Search Users</h1>
+    </div>
+    <div>
+        <form method="post" action="/search_users">
+            <label for="first_name">First Name:</label>
+            <input type="text" name="first_name" required='true' /><br />
+            <input type="submit" value="Search" />
+        </form> 
+    </div>
+
+    <div>
+        {% if users %}
+            <table style="margin-left: 20px;">
+                <th>
+                    <tr style="color: green;"> 
+                        <td>User ID</td>   
+                        <td>First Name</td>
+                        <td>Last Name</td>
+                        <td>Gender</td>
+                        <td>Hometown</td>
+                    </tr>
+                </th>
+
+            {% for user in users %}
+            <tr>
+                <td>{{ user[0] }}</td>
+                <td>{{ user[1] }}</td>
+                <td>{{ user[2] }}</td>
+                <td>{{ user[3] }}</td>
+                <td>{{ user[4] }}</td>
+                <td>
+                    <a href="{{ url_for('add_friend', addressee_id = user[0], addressee_first_name = user[1])}}"> Add Friend</a>
+                </td>
+            </tr>
+            {%endfor%}
+        {% endif %}
+    </div>
+
+    <div>
+        {% if rec_ls %}
+            <h3>Friend Recommendations:</h3>
+
+            <table style="margin-left: 20px;">
+                <th>
+                    <tr style="color: rgb(119, 0, 255);"> 
+                        <td>User ID</td>   
+                        <td>First Name</td>
+                        <td>Last Name</td>
+                        <td># of Mutuals</td>
+                    </tr>
+                </th>
+
+            {% for rec in rec_ls %}
+            <tr>
+                <td>{{ rec[0] }}</td>
+                <td>{{ rec[1] }}</td>
+                <td>{{ rec[2] }}</td>
+                <td>{{ rec[3] }}</td>
+                <td>
+                    <a href="{{ url_for('add_friend', addressee_id = rec[0], addressee_first_name = rec[1])}}"> Add Friend</a>
+                </td>
+            </tr>
+            {%endfor%}
+        {% endif %}
+    </div>
+
+</body>
+
+<style type="text/css">
+    th:tr{
+        color: blue;
+    }
+    tr:nth-of-type(2n){
+        border: 1px solid black;
+        background-color: rgba(224, 224, 224, 0.5);
+    }
+    td{
+        padding: 8px 8px;
+        border: 1px solid black;
+    }
+</style>
+
