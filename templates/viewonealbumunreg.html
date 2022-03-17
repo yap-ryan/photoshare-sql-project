@@ -1,0 +1,21 @@
+
+<!-- after the button of an album is clicked it redirects to the viewonealbum.html page
+to show the photos from that one album (UNREGISTERED so can not delete the photos) -->
+
+<head>
+    <title>View Photos of This Album</title>
+</head>
+
+
+<h2>Here are your photos</h2>
+    <ul>
+    {% for photo in photos %}
+
+        <li>{{photo[2]}}<br>
+        <img src='data:image/jpg;base64, {{ base64.b64encode(photo[0]).decode("ascii") }}'/></li>
+    {% endfor %}
+    </ul>
+
+
+
+
