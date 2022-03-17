@@ -1,0 +1,24 @@
+
+<head>
+    <title>Create an Album!</title>
+</head>
+    <body>
+        <div class="title">
+            <h1>Upload a photo to New Album</h1>
+        </div>
+            <form method="post" enctype="multipart/form-data" action="/createalbum">
+            
+                <label for="albumname">Album Name:</label>
+                <input type="text" name="albumname" required='true' /><br />
+
+
+                <label for="date">Date:</label>
+                <input type="date" name="date" required='true' /><br />
+
+                <label for="photo">Select photo:</label>
+                <input type="file" name="photo" required='true' /><br />
+                <label for="caption">Please caption:</label>
+                <input type="text" name="caption" required='true' /><br />
+                <input type="submit" value="Upload" />
+            </form>
+    </body>
