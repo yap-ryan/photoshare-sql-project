@@ -500,6 +500,7 @@ def search_my_tags():
 
 # Accepts string of tags
 # EXAMPLE INPUTS: "friends", "friends boston"
+# NOTE: This is a Conjunctive search
 def getPhotosByTag(tags):
     tag_list = tags.split()
     num_tags = len(tag_list)
@@ -577,7 +578,95 @@ def getPopularTags(count):
     cursor = conn.cursor()
     cursor.execute(query)
     return cursor.fetchall()  
+
+  
 # End Tags code
+
+# Start Recommendations (You May Also Like Feature) Code
+
+@app.route('/you_may_like', methods=['GET'])
+@flask_login.login_required
+def you_may_like():
+	uid = getUserIdFromEmail(flask_login.current_user.id)
+	user_tags = getUserPopularTags(uid,5)
+	tag_string = ""
+ 
+	# Build tag_string
+	for tag in user_tags:
+		tag_string += tag[0] + " "
+  
+	print(tag_string)
+
+	photo_count = getOtherPhotosByTag(uid, tag_string) # Format: [(photo_id, data, caption, cntMatches), ...]
+ 
+	photo_data = []
+	count_map = {5: [], 4: [], 3: [], 2: [], 1: []}
+ 
+	# Populate count_map
+	for p in photo_count:
+		match_count = p[3]
+		p_id = p[0]
+		num_tags = len(getTagsOfPhoto(p_id))
+		
+		count_map[match_count].append((p_id, p[1], p[2], num_tags))
+  
+	# test = []
+	for cnt in count_map:
+		count_map[cnt].sort(key = lambda x: x[3])
+		for photo in count_map[cnt]:
+			# test.append((photo[0],photo[3]))
+			photo_data.append(photo)
+
+	# print(test)
+		
+	return render_template('you_may_like.html', tags = tag_string, photos = photo_data, base64=base64)
+
+def getUserPopularTags(uid, count):
+    
+    query = '''
+			SELECT t.text, COUNT(*) AS Cnt
+			FROM Tags t, Photos p
+			WHERE t.photo_id = p.photo_id AND p.user_id = %s 
+			GROUP BY t.text
+			ORDER BY Cnt DESC
+			LIMIT %s;
+    		''' % (uid, count)
+    
+    cursor = conn.cursor()
+    cursor.execute(query)
+    return cursor.fetchall()
+
+# NOTE: This is a Disjunctive tag search 
+def getOtherPhotosByTag(uid, tags):
+    tag_list = tags.split()
+    num_tags = len(tag_list)
+    
+    if num_tags == 0:
+        return       
+
+    query = '''
+            SELECT m.photo_id, p.data, p.caption, m.cntMatches
+			FROM Photos p,
+				(SELECT t.photo_id, COUNT(t.photo_id) as cntMatches
+				FROM Tags t
+				WHERE t.text = \"%s\"
+            ''' % tag_list[0]
+            
+    for i in range(1, num_tags):
+        query += " OR t.text = \"%s\"" % tag_list[i]
+    
+    query += '''
+    		GROUP BY t.photo_id) AS m
+			WHERE p.photo_id = m.photo_id AND p.user_id <> %s
+			ORDER BY cntMatches DESC;
+    		''' % uid
+    
+    cursor = conn.cursor()
+    cursor.execute(query)
+    
+    return cursor.fetchall()   
+
+# End Recommendations Code
 
 
 @app.context_processor
