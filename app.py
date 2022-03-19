@@ -187,6 +187,9 @@ def getUsersAlbums(uid):
 	cursor.execute("SELECT album_name FROM Albums WHERE user_id = '{0}'".format(uid))
 	return cursor.fetchall()  #return list of all of the albums owned by that user 
 
+def deleteAlbum(album_name):
+	cursor = conn.cursor()
+	cursor.execute("DELETE FROM Albums WHERE album_name = '{0}'".format(album_name))
 
 def getAllUserIds():
 	cursor = conn.cursor()
@@ -443,6 +446,31 @@ def viewonealbumuser():
 	return render_template('viewonealbumunreg.html',  photos=photos, base64=base64)
 
 # end view one album for registered user code 
+
+
+
+
+#begin delete album code 
+
+@app.route('/deletealbum', methods=['GET', 'POST'])
+@flask_login.login_required
+def deletealbum(): 
+
+    args = request.args 
+
+    album_name = args.get('album_name')
+   
+    deleteAlbum(album_name)
+
+    uid = getUserIdFromEmail(flask_login.current_user.id)
+    albums = getUsersAlbums(uid)
+
+    return render_template('viewuseralbums.html', album_list = albums) 
+
+
+# end delete album code 
+
+
 
 
 

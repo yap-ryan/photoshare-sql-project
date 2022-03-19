@@ -27,10 +27,20 @@
 </head>
     <body>
 
- 
-    {% for album_name in album_list %}
-        <a href= "{{ url_for('viewonealbumuser', album_name = album_name) }}" >{{album_name[0]}}</a>
-    {% endfor %}
+
+    <ul>
+        {% for album_name in album_list %}
+            <li>
+                <a href= "{{ url_for('viewonealbumuser', album_name = album_name) }}" >{{album_name[0]}}</a>
+            </li>
+            <a href= "{{ url_for('deletealbum', album_name = album_name) }}" >Delete {{album_name[0]}}</a>
+        {% endfor %}
+    </ul>
 
     </body>
+
+
+    <li><a href='/'>Home</a></li>
+    
+ 
     
