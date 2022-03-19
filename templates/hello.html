@@ -36,3 +36,12 @@
   <li><a href='/logout'>Logout</a></li>
   <li><a href='/'>Home</a></li>
 </ul>
+
+<div>
+  <h4>Top 5 Tags:</h4>
+  <ol>
+    {% for tag in getPopularTags(5) %}
+      <li><a href="{{ url_for('search_tags', tag=tag[0])}}">{{tag[0]}}</a> -- ({{tag[1]}} photos)</li>
+    {% endfor %}
+  </ol>
+</div>

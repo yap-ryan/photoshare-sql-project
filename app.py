@@ -563,12 +563,26 @@ def getTagsOfPhoto(photo_id):
     cursor.execute(query)
     
     return cursor.fetchall()
+
+def getPopularTags(count):
+    
+    query = '''
+			SELECT t.text, COUNT(*) AS Cnt
+			FROM Tags t
+			GROUP BY t.text
+			ORDER BY Cnt DESC
+			LIMIT %s;
+    		''' % count
+    
+    cursor = conn.cursor()
+    cursor.execute(query)
+    return cursor.fetchall()  
 # End Tags code
 
 
 @app.context_processor
 def utility_processor():
-    return {'getTagsOfPhoto': getTagsOfPhoto}
+    return {'getTagsOfPhoto': getTagsOfPhoto, 'getPopularTags': getPopularTags}
 
 #default page
 @app.route("/", methods=['GET'])
