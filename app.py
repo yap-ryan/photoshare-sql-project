@@ -178,7 +178,7 @@ def getUsersPhotos(uid):
 
 def getAlbumsPhotos(albumid):
 	cursor = conn.cursor()
-	cursor.execute("SELECT data FROM Photos WHERE album_id = '{0}'".format(albumid))
+	cursor.execute("SELECT data, photo_id FROM Photos WHERE album_id = '{0}'".format(albumid))
 	return cursor.fetchall() #NOTE return a list of tuples, [(imgdata, pid, caption), ...]
 
 
@@ -190,6 +190,10 @@ def getUsersAlbums(uid):
 def deleteAlbum(album_name):
 	cursor = conn.cursor()
 	cursor.execute("DELETE FROM Albums WHERE album_name = '{0}'".format(album_name))
+
+def deletePhoto(photo_id):
+	cursor = conn.cursor()
+	cursor.execute("DELETE FROM Photos WHERE photo_id = '{0}'".format(photo_id))
 
 def getAllUserIds():
 	cursor = conn.cursor()
@@ -443,7 +447,7 @@ def viewonealbumuser():
 	album_id = getAlbumIdFromName(album_name)
 
 	photos = getAlbumsPhotos(album_id)
-	return render_template('viewonealbumunreg.html',  photos=photos, base64=base64)
+	return render_template('viewonealbumuser.html', album_id = album_id, photos=photos, base64=base64)
 
 # end view one album for registered user code 
 
@@ -470,6 +474,28 @@ def deletealbum():
 
 # end delete album code 
 
+
+
+
+#begin delete photo code 
+
+@app.route('/deletephoto', methods=['GET', 'POST'])
+@flask_login.login_required
+def deletephoto(): 
+
+    args = request.args 
+
+    photo_id = args.get('photo_id')
+    album_id = args.get('album_id')
+   
+    deletePhoto(photo_id)
+
+
+    photos = getAlbumsPhotos(album_id)
+    return render_template('viewonealbumuser.html',  photos=photos, base64=base64)
+
+
+# end delete photo code 
 
 
 

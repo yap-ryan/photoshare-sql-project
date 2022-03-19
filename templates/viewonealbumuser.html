@@ -13,7 +13,15 @@ to show the photos from that one album (REGISTERED so add delete photo functiona
     <ul>
     {% for photo in photos %}
 
-        <li>{{photo[2]}}<br>
-        <img src='data:image/jpg;base64, {{ base64.b64encode(photo[0]).decode("ascii") }}'/></li>
+        <li>
+            {{photo[2]}}<br>
+            <img src='data:image/jpg;base64, {{ base64.b64encode(photo[0]).decode("ascii") }}' height="400"/>
+        </li>
+
+       
+        <a href= "{{ url_for('deletephoto', album_id = album_id, photo_id = photo[1]) }}" >Delete</a>
+
     {% endfor %}
+
+    <li><a href='/'>Home</a></li>
     </ul>
