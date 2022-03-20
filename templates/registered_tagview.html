@@ -20,7 +20,7 @@
         {% for photo in photos %}
             <li>
                 {{photo[2]}}<br>
-                <img src='data:image/jpg;base64, {{ base64.b64encode(photo[1]).decode("ascii") }}'/>
+                <img src='data:image/jpg;base64, {{ base64.b64encode(photo[1]).decode("ascii") }}' height="400"/>
             </li>
             {% for tag in getTagsOfPhoto(photo[0]) %}
                 <a href="{{ url_for('search_tags', tag=tag[0])}}">{{tag[0]}}</a>

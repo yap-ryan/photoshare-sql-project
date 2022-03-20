@@ -14,9 +14,44 @@ to show the photos from that one album (UNREGISTERED so can not delete the photo
             {{photo[2]}}<br>
             <img src='data:image/jpg;base64, {{ base64.b64encode(photo[1]).decode("ascii") }}' height="400"/>
         </li>
-        {% for tag in getTagsOfPhoto(photo[0]) %}
-            <a href="{{ url_for('search_tags', tag=tag[0])}}">{{tag[0]}}</a>
-        {% endfor %}
+
+        <!-- LIKES FEATURES -->
+        {% if isAuth %}
+        <form method="post" action="{{url_for('add_like', photo_id=photo[0])}}">
+            <button type="submit">Like 👍</button>
+        </form>
+
+
+        {% endif %}
+
+
+        <div>
+            Likes: {{ getLikes(photo[0]) }}
+        </div>
+
+        <div>
+            Liked By: 
+            {% if getLikeList(photo[0]) %}
+                {{getLikeList(photo[0])}}
+            {% else %}
+                None
+            {% endif %}
+        </div>
+
+        <!-- TAGS -->
+        <div>
+            Tags:
+            {% if getTagsOfPhoto(photo[0]) %}
+                {% for tag in getTagsOfPhoto(photo[0]) %}
+                    <a href="{{ url_for('search_tags', tag=tag[0])}}">{{tag[0]}}</a>
+                {% endfor %}
+            {% else %}
+                None
+            {% endif %}
+
+
+        </div>
+        
     {% endfor %}
     </ul>
 

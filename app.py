@@ -10,6 +10,7 @@
 ###################################################
 
 from os import environ
+from tkinter import S
 import flask
 from flask import Flask, Response, request, render_template, redirect, url_for
 from flaskext.mysql import MySQL
@@ -669,9 +670,66 @@ def getOtherPhotosByTag(uid, tags):
 # End Recommendations Code
 
 
+# Start 'Like Photo' code
+
+# Adds a like to a photo
+@app.route('/add_like', methods=['GET', 'POST'])
+def add_like():
+    args = request.args
+    photo_id = args.get('photo_id')
+
+    uid = getUserIdFromEmail(flask_login.current_user.id)
+    
+    query = "INSERT INTO Likes (user_id, photo_id) VALUES (%s, %s);" % (uid, photo_id)
+    
+    cursor = conn.cursor()
+    cursor.execute(query)
+    conn.commit()  
+    
+    return (''), 204
+
+# Function to return string of all user emails who liked a photo
+def getLikeList(photo_id):
+    query = '''
+			SELECT u.email
+			FROM Users u, Likes l
+			WHERE l.photo_id = %s AND u.user_id = l.user_id;
+   			''' % photo_id
+    
+    cursor = conn.cursor()
+    cursor.execute(query)
+    
+    user_emails = ""
+    
+    for tup in cursor.fetchall() :
+        user_emails += tup[0] + " "
+    
+    return user_emails
+
+# Function to get number of likes on a photo
+def getLikes(photo_id):
+    query = '''
+    		SELECT COUNT(l.user_id)
+			FROM Likes l
+			WHERE l.photo_id = %s;
+      		''' % photo_id
+    
+    cursor = conn.cursor()
+    cursor.execute(query)
+    res = cursor.fetchone()
+	
+    return res[0]
+
+# End 'Like Photo' code
+
+
 @app.context_processor
 def utility_processor():
-    return {'getTagsOfPhoto': getTagsOfPhoto, 'getPopularTags': getPopularTags}
+    uid = None
+    if flask_login.current_user.is_authenticated:
+        uid = getUserIdFromEmail(flask_login.current_user.id)
+    
+    return {'getTagsOfPhoto': getTagsOfPhoto, 'getPopularTags': getPopularTags, 'getLikes': getLikes, 'getLikeList': getLikeList, 'isAuth': flask_login.current_user.is_authenticated, 'uid': uid}
 
 #default page
 @app.route("/", methods=['GET'])
