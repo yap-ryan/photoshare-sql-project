@@ -33,4 +33,16 @@
   <li><a href='/viewuseralbums'>View Your Albums</a> </li>
   <li><a href='/logout'>Logout</a></li>
   <li><a href='/'>Home</a></li>
+
+
+
 </ul>
+
+<div>
+  <h4>Top 10 Contributors:</h4>
+  <ol>
+    {% for contributor in top_contributors %}
+      <li>{{contributor[1], contributor[2], contributor[3]}}</li>
+    {% endfor %}
+  </ol>
+</div>
