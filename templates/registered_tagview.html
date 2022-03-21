@@ -1,0 +1,33 @@
+<head>
+    <title>View Your Photos by Tag</title>
+</head>
+
+<body>
+    <a href='/'>Home</a> 
+    <div>
+        <form method="post" action="/search_user_tags">
+            <label for="tags">Search Tags:</label>
+            <input type="text" name="tags" required='true' /><br />
+            <input type="submit" value="Search" />
+        </form> 
+    </div>
+    {% if tags %}
+        <h3>Here are your photos with tag(s): {{ tags }}</h3>
+    {% endif %}
+
+    {% if photos %}
+    <ul>
+        {% for photo in photos %}
+            <li>
+                {{photo[2]}}<br>
+                <img src='data:image/jpg;base64, {{ base64.b64encode(photo[1]).decode("ascii") }}' height="400"/>
+            </li>
+            {% for tag in getTagsOfPhoto(photo[0]) %}
+                <a href="{{ url_for('search_tags', tag=tag[0])}}">{{tag[0]}}</a>
+            {% endfor %}
+        {% endfor %}
+    </ul>
+    {% endif %}
+
+</body>
+

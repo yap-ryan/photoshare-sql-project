@@ -10,6 +10,7 @@
 ###################################################
 
 from os import environ
+from tkinter import S
 import flask
 from flask import Flask, Response, request, render_template, redirect, url_for
 from flaskext.mysql import MySQL
@@ -25,9 +26,10 @@ app.secret_key = 'super secret string'  # Change this!
 
 #These will need to be changed according to your creditionals
 app.config['MYSQL_DATABASE_USER'] = 'root'
-app.config['MYSQL_DATABASE_PASSWORD'] = 'Bec00YuDio!!'
-app.config['MYSQL_DATABASE_DB'] = 'photoshareTEST3'
+app.config['MYSQL_DATABASE_PASSWORD'] = 'MySQLPass420!'
+app.config['MYSQL_DATABASE_DB'] = 'photoshareTEST5'
 app.config['MYSQL_DATABASE_HOST'] = 'localhost'
+
 mysql.init_app(app)
 
 # begin code used for login
@@ -207,7 +209,7 @@ def getUsersPhotos(uid):
 
 def getAlbumsPhotos(albumid):
 	cursor = conn.cursor()
-	cursor.execute("SELECT data, photo_id, caption FROM Photos WHERE album_id = '{0}'".format(albumid))
+	cursor.execute("SELECT photo_id, data, caption FROM Photos WHERE album_id = '{0}'".format(albumid))
 	return cursor.fetchall() #NOTE return a list of tuples, [(imgdata, pid, caption), ...]
 
 
@@ -367,29 +369,35 @@ def allowed_file(filename):
 @app.route('/upload', methods=['GET', 'POST'])
 @flask_login.login_required
 def upload_file():
-    uid = getUserIdFromEmail(flask_login.current_user.email)
-    album_list = getUsersAlbums(uid)
-    
-    if request.method == 'POST':
-        imgfile = request.files['photo']
-        caption = request.form.get('caption')
-        photo_data =imgfile.read()
-        cursor = conn.cursor()
-        albumname = request.form.get('selectalbum')
-        
-        album_id = getAlbumIdFromName(albumname)		
-        cursor.execute('''INSERT INTO Photos (data, caption, album_id, user_id) VALUES (%s, %s ,%s, %s)''', (photo_data, caption, album_id, uid))
-        conn.commit()
-        incContributionScore(uid) 
-        return render_template('hello.html',top_contributors = topContributors(), name=flask_login.current_user.email, message='Photo uploaded!', photos=getUsersPhotos(uid), base64=base64)
-	
-	#The method is GET so we return a  HTML form to upload the a photo.
-    else:
-        return render_template('upload.html', album_list = album_list)
+
+	uid = getUserIdFromEmail(flask_login.current_user.email)
+	album_list = getUsersAlbums(uid)
+
+	if request.method == 'POST':
+		imgfile = request.files['photo']
+		caption = request.form.get('caption')
+		tag_string = request.form.get('tags')
+		photo_data =imgfile.read()
+		cursor = conn.cursor()
+		albumname = request.form.get('selectalbum')
+  
+  
+        # Insert photos
+		album_id = getAlbumIdFromName(albumname)		
+		cursor.execute('''INSERT INTO Photos (data, caption, album_id, user_id) VALUES (%s, %s ,%s, %s)''', (photo_data, caption, album_id, uid))
+		photo_id = cursor.lastrowid
+  
+        # Insert tags
+		tags = tag_string.split()
+		for i in range(0,len(tags)):
+			cursor.execute('''INSERT INTO Tags (text, photo_id) VALUES (%s, %s)''', (tags[i], photo_id))
+  
+		conn.commit()
+		return render_template('hello.html', name=flask_login.current_user.email, message='Photo uploaded!', photos=getUsersPhotos(uid), base64=base64)
+    #The method is GET so we return a  HTML form to upload the a photo.
+	else:
+		return render_template('upload.html', album_list = album_list)
 #end photo uploading code
-
-
-
 
 #begin create new album code 
 
@@ -405,25 +413,33 @@ def create_new_album():
     if request.method == 'POST':
         imgfile = request.files['photo']
         caption = request.form.get('caption')
+        tag_string = request.form.get('tags')
         photo_data =imgfile.read()
-        cursor2 = conn.cursor()
+        cursor = conn.cursor()
         createdalbum = request.form.get('albumname')
         date = request.form.get('date')
-        
-        cursor2.execute('''INSERT INTO Albums (album_name, creation_date, user_id) VALUES (%s, %s, %s )''', (createdalbum, date, uid))
-        album_id = getAlbumIdFromName(createdalbum)		
-        cursor2.execute('''INSERT INTO Photos (data, caption, album_id, user_id) VALUES (%s, %s ,%s, %s)''', (photo_data, caption, album_id, uid))
-        conn.commit() 
-        incContributionScore(uid)
-        return render_template('hello.html', top_contributors = topContributors(), name=flask_login.current_user.email, message='Photo uploaded!', photos=getUsersPhotos(uid), base64=base64)
+
+        # Insert album
+        cursor.execute('''INSERT INTO Albums (album_name, creation_date, user_id) VALUES (%s, %s, %s )''', (createdalbum, date, uid))
+        album_id = getAlbumIdFromName(createdalbum)	
+
+        # Insert photo
+        cursor.execute('''INSERT INTO Photos (data, caption, album_id, user_id) VALUES (%s, %s ,%s, %s)''', (photo_data, caption, album_id, uid))
+        photo_id = cursor.lastrowid
+
+        # Insert tags
+        tags = tag_string.split()
+        for i in range(0,len(tags)):
+            cursor.execute('''INSERT INTO Tags (text, photo_id) VALUES (%s, %s)''', (tags[i], photo_id))
+
+        conn.commit()
+        return render_template('hello.html', name=flask_login.current_user.email, message='Photo uploaded!', photos=getUsersPhotos(uid), base64=base64)
 	
 	#The method is GET so we return a  HTML form to upload the a photo.
     else:
 	    return render_template('createalbum.html')
 
 #end create new album code 
-
-
 
 #begin view all albums code 
 
@@ -489,7 +505,7 @@ def viewUserAlbums():
 	return render_template('viewuseralbums.html', album_list = albums)
 
 
-#begin view user albums code 
+#end view user albums code 
 
 
 
@@ -510,7 +526,273 @@ def viewonealbumuser():
 # end view one album for registered user code 
 
 
+# Begin Tags code
 
+# NOTE: Hyperlinks result in GET requests!
+@app.route('/search_tags', methods=['GET','POST'])
+def search_tags():
+    if request.method == 'POST':
+        
+        tag_string = request.form.get('tags')
+            
+        photo_data = getPhotosByTag(tag_string) # Format: [(photo_id, data, caption), ...]
+            
+        return render_template('tagview.html', tags = tag_string, photos = photo_data, base64=base64)
+    else:
+        # ARGS USED IF USING TAG HYPERLINK
+        if request.args:
+            args = request.args
+            tag_string = args.get('tag')
+            photo_data = getPhotosByTag(tag_string) # Format: [(photo_id, data, caption), ...]
+
+            return render_template('tagview.html', tags = tag_string, photos=photo_data, base64=base64)
+		
+        return render_template('tagview.html')
+    
+@app.route('/search_user_tags', methods=['GET','POST'])
+@flask_login.login_required
+def search_my_tags():
+    if request.method == 'POST':
+                
+        uid = getUserIdFromEmail(flask_login.current_user.id)
+        tag_string = request.form.get('tags')
+        photo_data = getUserPhotosByTag(tag_string,uid) # Format: [(photo_id, data, caption), ...]
+        
+        return render_template('registered_tagview.html', tags = tag_string, photos = photo_data, base64=base64)
+    else:
+        return render_template('registered_tagview.html')
+
+# Accepts string of tags
+# EXAMPLE INPUTS: "friends", "friends boston"
+# NOTE: This is a Conjunctive search
+def getPhotosByTag(tags):
+    tag_list = tags.split()
+    num_tags = len(tag_list)
+    
+    if num_tags == 0:
+        return       
+
+    query = '''
+            SELECT p.photo_id, p.data, p.caption
+            FROM Photos p,
+                (SELECT DISTINCT t.photo_id 
+                FROM Tags t
+                WHERE t.text = \"%s\"
+            ''' % tag_list[0]
+            
+    for i in range(1, num_tags):
+        query += " AND t.photo_id IN (SELECT t{0}.photo_id FROM Tags t{0} WHERE t{0}.text = \"{1}\")".format(str(i), tag_list[i])
+    
+    query += ") AS tg WHERE p.photo_id = tg.photo_id;"
+    
+    cursor = conn.cursor()
+    cursor.execute(query)
+    
+    return cursor.fetchall()   
+
+def getUserPhotosByTag(tags, uid):
+    tag_list = tags.split()
+    num_tags = len(tag_list)
+    
+    if num_tags == 0:
+        return       
+
+    query = '''
+            SELECT p.photo_id, p.data, p.caption
+            FROM Photos p,
+                (SELECT DISTINCT t.photo_id 
+                FROM Tags t
+                WHERE t.text = \"%s\"
+            ''' % tag_list[0]
+            
+    for i in range(1, num_tags):
+        query += " AND t.photo_id IN (SELECT t{0}.photo_id FROM Tags t{0} WHERE t{0}.text = \"{1}\")".format(str(i), tag_list[i])
+    
+    query += ") AS tg WHERE p.photo_id = tg.photo_id AND p.user_id = {0};".format(uid)
+    
+    print(query)
+    cursor = conn.cursor()
+    cursor.execute(query)
+    
+    return cursor.fetchall()
+
+def getTagsOfPhoto(photo_id):
+    
+    query = '''
+            SELECT t.text
+            FROM Tags t
+            WHERE t.photo_id = %s;
+            ''' % photo_id
+            
+    cursor = conn.cursor()
+    cursor.execute(query)
+    
+    return cursor.fetchall()
+
+def getPopularTags(count):
+    
+    query = '''
+			SELECT t.text, COUNT(*) AS Cnt
+			FROM Tags t
+			GROUP BY t.text
+			ORDER BY Cnt DESC
+			LIMIT %s;
+    		''' % count
+    
+    cursor = conn.cursor()
+    cursor.execute(query)
+    return cursor.fetchall()  
+
+  
+# End Tags code
+
+# Start Recommendations (You May Also Like Feature) Code
+
+@app.route('/you_may_like', methods=['GET'])
+@flask_login.login_required
+def you_may_like():
+	uid = getUserIdFromEmail(flask_login.current_user.id)
+	user_tags = getUserPopularTags(uid,5)
+	tag_string = ""
+ 
+	# Build tag_string
+	for tag in user_tags:
+		tag_string += tag[0] + " "
+  
+	print(tag_string)
+
+	photo_count = getOtherPhotosByTag(uid, tag_string) # Format: [(photo_id, data, caption, cntMatches), ...]
+ 
+	photo_data = []
+	count_map = {5: [], 4: [], 3: [], 2: [], 1: []}
+ 
+	# Populate count_map
+	for p in photo_count:
+		match_count = p[3]
+		p_id = p[0]
+		num_tags = len(getTagsOfPhoto(p_id))
+		
+		count_map[match_count].append((p_id, p[1], p[2], num_tags))
+  
+	# test = []
+	for cnt in count_map:
+		count_map[cnt].sort(key = lambda x: x[3])
+		for photo in count_map[cnt]:
+			# test.append((photo[0],photo[3]))
+			photo_data.append(photo)
+
+	# print(test)
+		
+	return render_template('you_may_like.html', tags = tag_string, photos = photo_data, base64=base64)
+
+def getUserPopularTags(uid, count):
+    
+    query = '''
+			SELECT t.text, COUNT(*) AS Cnt
+			FROM Tags t, Photos p
+			WHERE t.photo_id = p.photo_id AND p.user_id = %s 
+			GROUP BY t.text
+			ORDER BY Cnt DESC
+			LIMIT %s;
+    		''' % (uid, count)
+    
+    cursor = conn.cursor()
+    cursor.execute(query)
+    return cursor.fetchall()
+
+# NOTE: This is a Disjunctive tag search 
+def getOtherPhotosByTag(uid, tags):
+    tag_list = tags.split()
+    num_tags = len(tag_list)
+    
+    if num_tags == 0:
+        return       
+
+    query = '''
+            SELECT m.photo_id, p.data, p.caption, m.cntMatches
+			FROM Photos p,
+				(SELECT t.photo_id, COUNT(t.photo_id) as cntMatches
+				FROM Tags t
+				WHERE t.text = \"%s\"
+            ''' % tag_list[0]
+            
+    for i in range(1, num_tags):
+        query += " OR t.text = \"%s\"" % tag_list[i]
+    
+    query += '''
+    		GROUP BY t.photo_id) AS m
+			WHERE p.photo_id = m.photo_id AND p.user_id <> %s
+			ORDER BY cntMatches DESC;
+    		''' % uid
+    
+    cursor = conn.cursor()
+    cursor.execute(query)
+    
+    return cursor.fetchall()   
+
+# End Recommendations Code
+
+
+# Start 'Like Photo' code
+
+# Adds a like to a photo
+@app.route('/add_like', methods=['GET', 'POST'])
+def add_like():
+    args = request.args
+    photo_id = args.get('photo_id')
+
+    uid = getUserIdFromEmail(flask_login.current_user.id)
+    
+    query = "INSERT INTO Likes (user_id, photo_id) VALUES (%s, %s);" % (uid, photo_id)
+    
+    cursor = conn.cursor()
+    cursor.execute(query)
+    conn.commit()  
+    
+    return (''), 204
+
+# Function to return string of all user emails who liked a photo
+def getLikeList(photo_id):
+    query = '''
+			SELECT u.email
+			FROM Users u, Likes l
+			WHERE l.photo_id = %s AND u.user_id = l.user_id;
+   			''' % photo_id
+    
+    cursor = conn.cursor()
+    cursor.execute(query)
+    
+    user_emails = ""
+    
+    for tup in cursor.fetchall() :
+        user_emails += tup[0] + " "
+    
+    return user_emails
+
+# Function to get number of likes on a photo
+def getLikes(photo_id):
+    query = '''
+    		SELECT COUNT(l.user_id)
+			FROM Likes l
+			WHERE l.photo_id = %s;
+      		''' % photo_id
+    
+    cursor = conn.cursor()
+    cursor.execute(query)
+    res = cursor.fetchone()
+	
+    return res[0]
+
+# End 'Like Photo' code
+
+
+@app.context_processor
+def utility_processor():
+    uid = None
+    if flask_login.current_user.is_authenticated:
+        uid = getUserIdFromEmail(flask_login.current_user.id)
+    
+    return {'getTagsOfPhoto': getTagsOfPhoto, 'getPopularTags': getPopularTags, 'getLikes': getLikes, 'getLikeList': getLikeList, 'isAuth': flask_login.current_user.is_authenticated, 'uid': uid}
 
 #begin delete album code 
 

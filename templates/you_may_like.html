@@ -1,0 +1,26 @@
+<head>
+    <title>You May Also Like</title>
+</head>
+
+<body>
+    <a href='/'>Home</a> 
+    <h4>Photo recommendations based on your most uploaded tags!</h4>
+    <h4>Based on your popular tag(s): {{ tags }}</h4>
+
+    {% if photos %}
+    <ul>
+        {% for photo in photos %}
+            <li>
+                {{photo[2]}}
+                <br>
+                <img src='data:image/jpg;base64, {{ base64.b64encode(photo[1]).decode("ascii") }}' height="400"/>
+            </li>
+            {% for tag in getTagsOfPhoto(photo[0]) %}
+                <a href="{{ url_for('search_tags', tag=tag[0])}}">{{tag[0]}}</a>
+            {% endfor %}
+        {% endfor %}
+    </ul>
+    {% endif %}
+
+</body>
+

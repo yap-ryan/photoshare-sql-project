@@ -14,7 +14,7 @@
     {% for photo in photos %}
 
         <li>{{photo[2]}}<br>
-        <img src='data:image/jpg;base64, {{ base64.b64encode(photo[0]).decode("ascii") }}'/></li>
+        <img src='data:image/jpg;base64, {{ base64.b64encode(photo[0]).decode("ascii") }}' height="400"/></li>
     {% endfor %}
     </ul>
 {% endif %}
@@ -31,6 +31,9 @@
   <li><a href='/upload'>Upload a Photo to Album</a> </li>
   <li><a href='/viewallalbums'>View All Albums</a> </li>
   <li><a href='/viewuseralbums'>View Your Albums</a> </li>
+  <li><a href='/search_tags'>Search Photos by Tags</a> </li>
+  <li><a href='/search_user_tags'>Search Your Photos by Tags</a> </li>
+  <li><a href='/you_may_like'>Photos You May Also Like</a> </li>
   <li><a href='/logout'>Logout</a></li>
   <li><a href='/'>Home</a></li>
 
@@ -43,6 +46,11 @@
   <ol>
     {% for contributor in top_contributors %}
       <li>{{contributor[1]}} {{contributor[2]}} {{contributor[3]}}</li>
+      
+  <h4>Top 5 Tags:</h4>
+  <ol>
+    {% for tag in getPopularTags(5) %}
+      <li><a href="{{ url_for('search_tags', tag=tag[0])}}">{{tag[0]}}</a> -- ({{tag[1]}} photos)</li>
     {% endfor %}
   </ol>
 </div>
