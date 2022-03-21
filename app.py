@@ -26,7 +26,7 @@ app.secret_key = 'super secret string'  # Change this!
 
 #These will need to be changed according to your creditionals
 app.config['MYSQL_DATABASE_USER'] = 'root'
-app.config['MYSQL_DATABASE_PASSWORD'] = 'MySQLPass420!'
+app.config['MYSQL_DATABASE_PASSWORD'] = 'Bec00YuDio!!'
 app.config['MYSQL_DATABASE_DB'] = 'photoshareTEST5'
 app.config['MYSQL_DATABASE_HOST'] = 'localhost'
 
@@ -370,33 +370,33 @@ def allowed_file(filename):
 @flask_login.login_required
 def upload_file():
 
-	uid = getUserIdFromEmail(flask_login.current_user.email)
-	album_list = getUsersAlbums(uid)
+        uid = getUserIdFromEmail(flask_login.current_user.email)
+        album_list = getUsersAlbums(uid)
 
-	if request.method == 'POST':
-		imgfile = request.files['photo']
-		caption = request.form.get('caption')
-		tag_string = request.form.get('tags')
-		photo_data =imgfile.read()
-		cursor = conn.cursor()
-		albumname = request.form.get('selectalbum')
+        if request.method == 'POST':
+            imgfile = request.files['photo']
+            caption = request.form.get('caption')
+            tag_string = request.form.get('tags')
+            photo_data =imgfile.read()
+            cursor = conn.cursor()
+            albumname = request.form.get('selectalbum')
+            
+            # Insert photo
+            album_id = getAlbumIdFromName(albumname)		
+            cursor.execute('''INSERT INTO Photos (data, caption, album_id, user_id) VALUES (%s, %s ,%s, %s)''', (photo_data, caption, album_id, uid))
+            photo_id = cursor.lastrowid
+            incContributionScore(uid)
   
-  
-        # Insert photos
-		album_id = getAlbumIdFromName(albumname)		
-		cursor.execute('''INSERT INTO Photos (data, caption, album_id, user_id) VALUES (%s, %s ,%s, %s)''', (photo_data, caption, album_id, uid))
-		photo_id = cursor.lastrowid
-  
-        # Insert tags
-		tags = tag_string.split()
-		for i in range(0,len(tags)):
-			cursor.execute('''INSERT INTO Tags (text, photo_id) VALUES (%s, %s)''', (tags[i], photo_id))
-  
-		conn.commit()
-		return render_template('hello.html', name=flask_login.current_user.email, message='Photo uploaded!', photos=getUsersPhotos(uid), base64=base64)
-    #The method is GET so we return a  HTML form to upload the a photo.
-	else:
-		return render_template('upload.html', album_list = album_list)
+            # Insert tags
+            tags = tag_string.split()
+            for i in range(0,len(tags)):
+                cursor.execute('''INSERT INTO Tags (text, photo_id) VALUES (%s, %s)''', (tags[i], photo_id))
+
+            conn.commit()
+            return render_template('hello.html', name=flask_login.current_user.email, message='Photo uploaded!', photos=getUsersPhotos(uid), base64=base64)
+        #The method is GET so we return a  HTML form to upload the a photo.
+        else: 
+            return render_template('upload.html', album_list = album_list)
 #end photo uploading code
 
 #begin create new album code 
@@ -426,6 +426,7 @@ def create_new_album():
         # Insert photo
         cursor.execute('''INSERT INTO Photos (data, caption, album_id, user_id) VALUES (%s, %s ,%s, %s)''', (photo_data, caption, album_id, uid))
         photo_id = cursor.lastrowid
+        incContributionScore(uid) 
 
         # Insert tags
         tags = tag_string.split()
@@ -477,7 +478,6 @@ def viewonealbumunreg():
 # begin comments code 
 
 
-@app.route('/showcomments', methods=['GET', 'POST'])
 def showcomments(): 
     args = request.args
     photo_id = args.get('photo_id')
@@ -792,7 +792,7 @@ def utility_processor():
     if flask_login.current_user.is_authenticated:
         uid = getUserIdFromEmail(flask_login.current_user.id)
     
-    return {'getTagsOfPhoto': getTagsOfPhoto, 'getPopularTags': getPopularTags, 'getLikes': getLikes, 'getLikeList': getLikeList, 'isAuth': flask_login.current_user.is_authenticated, 'uid': uid}
+    return {'getTagsOfPhoto': getTagsOfPhoto, 'showcomments': showcomments, 'getPopularTags': getPopularTags, 'getLikes': getLikes, 'getLikeList': getLikeList, 'isAuth': flask_login.current_user.is_authenticated, 'uid': uid}
 
 #begin delete album code 
 
@@ -854,16 +854,6 @@ def showcomments():
 
 
 # end comments code 
-
-
-
-@app.context_processor
-def utility_processor():
-    uid = None
-    if flask_login.current_user.is_authenticated:
-        uid = getUserIdFromEmail(flask_login.current_user.id)
-    
-    return {'isAuth': flask_login.current_user.is_authenticated, 'uid': uid}
 
 
 

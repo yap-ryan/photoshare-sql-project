@@ -46,7 +46,8 @@
   <ol>
     {% for contributor in top_contributors %}
       <li>{{contributor[1]}} {{contributor[2]}} {{contributor[3]}}</li>
-      
+    {% endfor %}
+
   <h4>Top 5 Tags:</h4>
   <ol>
     {% for tag in getPopularTags(5) %}
