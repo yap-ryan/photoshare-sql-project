@@ -11,11 +11,26 @@ to show the photos from that one album (UNREGISTERED so can not delete the photo
     <ul>
     {% for photo in photos %}
 
-        <li>{{photo[2]}}<br>
-        <img src='data:image/jpg;base64, {{ base64.b64encode(photo[0]).decode("ascii") }}'/></li>
-    {% endfor %}
-    </ul>
+        <li>
+            {{photo[2]}}<br>
+            <img src='data:image/jpg;base64, {{ base64.b64encode(photo[0]).decode("ascii") }}' height="400"/>
+        </li>
+        <label for="comment">Comment on Photo {{photo[2]}}:</label>
+        <input type="text" name="comment" /><br />
+        <label for="date">Date of Comment:</label>
+        <input type="date" name="date" required='true' /><br />
+    
+        {% if not isAuth %}
+        <form method="post" action="{{url_for('showcomments', photo_id=photo[1])}}">
+            <button type="submit">Submit Commment</button>
+        </form>
 
+        {% endif %}
+
+
+    {% endfor %}
+    <a href='/'>Home</a>
+    </ul>
 
 
 

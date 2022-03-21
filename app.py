@@ -207,7 +207,7 @@ def getUsersPhotos(uid):
 
 def getAlbumsPhotos(albumid):
 	cursor = conn.cursor()
-	cursor.execute("SELECT data, photo_id FROM Photos WHERE album_id = '{0}'".format(albumid))
+	cursor.execute("SELECT data, photo_id, caption FROM Photos WHERE album_id = '{0}'".format(albumid))
 	return cursor.fetchall() #NOTE return a list of tuples, [(imgdata, pid, caption), ...]
 
 
@@ -233,6 +233,12 @@ def deleteAlbum(album_name):
 def deletePhoto(photo_id):
 	cursor = conn.cursor()
 	cursor.execute("DELETE FROM Photos WHERE photo_id = '{0}'".format(photo_id))
+
+
+def getPhotosComments(photo_id):
+	cursor = conn.cursor()
+	cursor.execute("SELECT date, text FROM Comments WHERE photo_id = '{0}' ORDER BY date".format(photo_id))
+	return cursor.fetchall()  #return list of all of the user ids 
 
 def getAllUserIds():
 	cursor = conn.cursor()
@@ -423,18 +429,15 @@ def create_new_album():
 
 @app.route('/viewallalbums', methods=['GET', 'POST'])
 def viewAllAlbums(): 
-	user_id_list = getAllUserIds()
-	album_list_of_all_users = []
-
-	for x in user_id_list :
-
-		album_one_user = getUsersAlbums(x[0])
-		
-		for y in album_one_user : 
-			album_list_of_all_users.append(y)
-
-
-	return render_template('viewallalbums.html', album_list = album_list_of_all_users, user_list = user_id_list)
+    user_id_list = getAllUserIds()
+    album_list_of_all_users = []
+    
+    for x in user_id_list :
+        album_one_user = getUsersAlbums(x[0])
+        for y in album_one_user : 
+            album_list_of_all_users.append(y)
+    
+    return render_template('viewallalbums.html', album_list = album_list_of_all_users, user_list = user_id_list)
 
 
 #end view all albums code 
@@ -445,17 +448,32 @@ def viewAllAlbums():
 
 @app.route('/viewonealbumunreg', methods=['GET', 'POST'])
 def viewonealbumunreg(): 
-
-	args = request.args 
-
-	album_name = args.get('album_name')
-	
-	album_id = getAlbumIdFromName(album_name)
-
-	photos = getAlbumsPhotos(album_id)
-	return render_template('viewonealbumunreg.html',  photos=photos, base64=base64)
+    args = request.args 
+    album_name = args.get('album_name')
+    album_id = getAlbumIdFromName(album_name)
+    photos = getAlbumsPhotos(album_id)
+    
+    return render_template('viewonealbumunreg.html',  photos=photos, base64=base64)
 
 # end view one album for unregistered user code 
+
+
+# begin comments code 
+
+
+@app.route('/showcomments', methods=['GET', 'POST'])
+def showcomments(): 
+    args = request.args
+    photo_id = args.get('photo_id')
+    
+    comments = getPhotosComments(photo_id)
+
+
+
+
+
+# end comments code 
+
 
 
 
@@ -539,9 +557,31 @@ def deletephoto():
 
 
 
+# start comments code 
+
+@app.route('/showcomments', methods=['GET', 'POST'])
+
+def showcomments(): 
+
+    args = request.args 
+    photo_id = args.get('photo_id')
+    photo_comments = getPhotosComments(photo_id)
+
+    return render_template('viewonealbumuser.html',  photos=photos, base64=base64)
 
 
 
+# end comments code 
+
+
+
+@app.context_processor
+def utility_processor():
+    uid = None
+    if flask_login.current_user.is_authenticated:
+        uid = getUserIdFromEmail(flask_login.current_user.id)
+    
+    return {'isAuth': flask_login.current_user.is_authenticated, 'uid': uid}
 
 
 

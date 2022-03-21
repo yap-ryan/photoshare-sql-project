@@ -26,9 +26,16 @@
     <body>
 
     {% for album_name in album_list %}
-        <a href= "{{ url_for('viewonealbumunreg', album_name = album_name) }}" >{{album_name[0]}}</a>
+        <li>
+            <a href= "{{ url_for('viewonealbumunreg', album_name = album_name) }}" >{{album_name[0]}}</a>
+        </li>
+
+
+
+
     {% endfor %}
 
     
     </body>
+
 
