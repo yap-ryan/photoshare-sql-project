@@ -470,26 +470,10 @@ def viewonealbumunreg():
     album_id = getAlbumIdFromName(album_name)
     photos = getAlbumsPhotos(album_id)
     
+    
     return render_template('viewonealbumunreg.html',  photos=photos, base64=base64)
 
 # end view one album for unregistered user code 
-
-
-# begin comments code 
-
-
-def showcomments(): 
-    args = request.args
-    photo_id = args.get('photo_id')
-    
-    comments = getPhotosComments(photo_id)
-
-
-
-
-
-# end comments code 
-
 
 
 
@@ -733,6 +717,31 @@ def getOtherPhotosByTag(uid, tags):
 # End Recommendations Code
 
 
+# begin comments code 
+
+
+@app.route('/insertcomment', methods=['GET', 'POST'])
+def insertcomment(): 
+
+    args = request.args
+    uid = getUserIdFromEmail(flask_login.current_user.id)
+    photo_id = args.get('photo_id')
+    date = request.form.get('date')
+    text = request.form.get('comment')
+
+    print(photo_id)
+    print(date)
+    print(text)
+    
+    cursor = conn.cursor()
+    cursor.execute("INSERT INTO Comments ( text, date, user_id, photo_id) VALUES (%s, %s, %s, %s);", (text, date, uid, photo_id))
+    conn.commit() 
+
+    return (''), 204 
+# end comments code 
+
+
+
 # Start 'Like Photo' code
 
 # Adds a like to a photo
@@ -792,7 +801,7 @@ def utility_processor():
     if flask_login.current_user.is_authenticated:
         uid = getUserIdFromEmail(flask_login.current_user.id)
     
-    return {'getTagsOfPhoto': getTagsOfPhoto, 'showcomments': showcomments, 'getPopularTags': getPopularTags, 'getLikes': getLikes, 'getLikeList': getLikeList, 'isAuth': flask_login.current_user.is_authenticated, 'uid': uid}
+    return {'getTagsOfPhoto': getTagsOfPhoto, 'insertcomment' : insertcomment, 'getPhotosComments': getPhotosComments, 'getPopularTags': getPopularTags, 'getLikes': getLikes, 'getLikeList': getLikeList, 'isAuth': flask_login.current_user.is_authenticated, 'uid': uid}
 
 #begin delete album code 
 
@@ -838,22 +847,6 @@ def deletephoto():
 # end delete photo code 
 
 
-
-# start comments code 
-
-@app.route('/showcomments', methods=['GET', 'POST'])
-
-def showcomments(): 
-
-    args = request.args 
-    photo_id = args.get('photo_id')
-    photo_comments = getPhotosComments(photo_id)
-
-    return render_template('viewonealbumuser.html',  photos=photos, base64=base64)
-
-
-
-# end comments code 
 
 
 
