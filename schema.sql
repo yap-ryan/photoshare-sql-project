@@ -76,7 +76,7 @@ CREATE TABLE Comments(
     comment_id INTEGER AUTO_INCREMENT,
     text VARCHAR(255),
     date DATE,
-    user_id INTEGER NOT NULL,
+    user_id INTEGER,
     photo_id INTEGER NOT NULL,
 
     PRIMARY KEY (comment_id),

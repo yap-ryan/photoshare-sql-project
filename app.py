@@ -28,8 +28,8 @@ app.secret_key = 'super secret string'  # Change this!
 
 #These will need to be changed according to your creditionals
 app.config['MYSQL_DATABASE_USER'] = 'root'
-app.config['MYSQL_DATABASE_PASSWORD'] = 'Bec00YuDio!!'
-app.config['MYSQL_DATABASE_DB'] = 'photoshareTEST8'
+app.config['MYSQL_DATABASE_PASSWORD'] = 'MySQLPass420!'
+app.config['MYSQL_DATABASE_DB'] = 'photoshareTEST7'
 app.config['MYSQL_DATABASE_HOST'] = 'localhost'
 
 mysql.init_app(app)
@@ -141,7 +141,7 @@ def topContributors() :
         Select U.user_id, U.first_name, U.last_name, contribution_score
         From Users U
         GROUP BY U.user_id
-        ORDER BY contribution_score DESC    
+        ORDER BY contribution_score DESC   
         ''')
     topContributorTable = cursor.fetchall(); 
 
@@ -223,7 +223,7 @@ def getContributionScore(uid):
 def incContributionScore(uid):
     cursor = conn.cursor()
     cursor.execute("UPDATE Users SET contribution_score = contribution_score + 1 WHERE user_id ='{0}'".format(uid))
-
+    conn.commit()
 
 def getUsersAlbums(uid):
 	cursor = conn.cursor()
@@ -233,11 +233,12 @@ def getUsersAlbums(uid):
 def deleteAlbum(album_name):
 	cursor = conn.cursor()
 	cursor.execute("DELETE FROM Albums WHERE album_name = '{0}'".format(album_name))
+	conn.commit()
 
 def deletePhoto(photo_id):
 	cursor = conn.cursor()
 	cursor.execute("DELETE FROM Photos WHERE photo_id = '{0}'".format(photo_id))
-
+	conn.commit()
 
 def getPhotosComments(photo_id):
 	cursor = conn.cursor()
