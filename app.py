@@ -20,6 +20,8 @@ import flask_login
 import os
 import base64
 
+from pymysql import NULL
+
 mysql = MySQL()
 app = Flask(__name__)
 app.secret_key = 'super secret string'  # Change this!
@@ -27,7 +29,7 @@ app.secret_key = 'super secret string'  # Change this!
 #These will need to be changed according to your creditionals
 app.config['MYSQL_DATABASE_USER'] = 'root'
 app.config['MYSQL_DATABASE_PASSWORD'] = 'Bec00YuDio!!'
-app.config['MYSQL_DATABASE_DB'] = 'photoshareTEST5'
+app.config['MYSQL_DATABASE_DB'] = 'photoshareTEST8'
 app.config['MYSQL_DATABASE_HOST'] = 'localhost'
 
 mysql.init_app(app)
@@ -727,27 +729,29 @@ def getOtherPhotosByTag(uid, tags):
 
 @app.route('/insertcomment', methods=['GET', 'POST'])
 def insertcomment(): 
-
     args = request.args
-    uid = getUserIdFromEmail(flask_login.current_user.id)
     photo_id = args.get('photo_id')
     date = request.form.get('date')
     text = request.form.get('comment')
 
-    print(photo_id)
-    print(date)
-    print(text)
-    
-    user_id_from_photo = getUserIdFromPhotoID(photo_id)
+    if (flask_login.current_user.is_authenticated) : 
+        
+        uid = getUserIdFromEmail(flask_login.current_user.id)
+        user_id_from_photo = getUserIdFromPhotoID(photo_id)
 
-    if not (user_id_from_photo == uid) : 
+        if not (user_id_from_photo == uid) : 
 
-        cursor = conn.cursor()
-        cursor.execute("INSERT INTO Comments ( text, date, user_id, photo_id) VALUES (%s, %s, %s, %s);", (text, date, uid, photo_id))
-        conn.commit() 
-        incContributionScore(uid)
-        return (''), 204 
+            cursor = conn.cursor()
+            cursor.execute("INSERT INTO Comments ( text, date, user_id, photo_id) VALUES (%s, %s, %s, %s);", (text, date, uid, photo_id))
+            conn.commit() 
+            incContributionScore(uid)
+            return (''), 204 
+        else: 
+            return (''), 204 
     else: 
+        cursor = conn.cursor()
+        cursor.execute("INSERT INTO Comments ( text, date, user_id, photo_id) VALUES (%s, %s,%s, %s);", (text, date,None, photo_id))
+        conn.commit() 
         return (''), 204 
 
 # end comments code 
