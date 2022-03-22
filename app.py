@@ -260,6 +260,11 @@ def getAlbumIdFromName(name):
 	cursor.execute("SELECT album_id FROM Albums WHERE album_name = '{0}'".format(name))
 	return cursor.fetchone()[0]
 
+def getUserIdFromPhotoID(photo_id):
+	cursor = conn.cursor()
+	cursor.execute("SELECT user_id FROM Photos WHERE photo_id = '{0}'".format(photo_id))
+	return cursor.fetchone()[0]
+
 
 def isEmailUnique(email):
     # use this to check if a email has already been registered
@@ -733,11 +738,18 @@ def insertcomment():
     print(date)
     print(text)
     
-    cursor = conn.cursor()
-    cursor.execute("INSERT INTO Comments ( text, date, user_id, photo_id) VALUES (%s, %s, %s, %s);", (text, date, uid, photo_id))
-    conn.commit() 
+    user_id_from_photo = getUserIdFromPhotoID(photo_id)
 
-    return (''), 204 
+    if not (user_id_from_photo == uid) : 
+
+        cursor = conn.cursor()
+        cursor.execute("INSERT INTO Comments ( text, date, user_id, photo_id) VALUES (%s, %s, %s, %s);", (text, date, uid, photo_id))
+        conn.commit() 
+        incContributionScore(uid)
+        return (''), 204 
+    else: 
+        return (''), 204 
+
 # end comments code 
 
 
