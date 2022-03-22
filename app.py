@@ -637,6 +637,32 @@ def getPopularTags(count):
   
 # End Tags code
 
+@app.route('/search_on_comment', methods=['GET','POST'])
+def search_on_comment():
+    if request.method == 'POST':
+        text = request.form.get('comment')
+        user_data = searchOnComment(text)
+        return render_template('search_on_comments.html', user_data=user_data, text=text)
+    else:
+        return render_template('search_on_comments.html')
+
+
+def searchOnComment(text):
+    query = '''
+            SELECT u.user_id, u.first_name, u.last_name, cmts.cnt
+            FROM Users u, (SELECT c.user_id, COUNT(*) as cnt
+                FROM Comments c
+                WHERE c.text = '%s'
+                GROUP BY c.user_id) AS cmts
+            WHERE cmts.user_id = u.user_id
+            ORDER BY cmts.cnt DESC;
+            ''' % text
+    
+    cursor = conn.cursor()
+    cursor.execute(query)
+    return cursor.fetchall()
+
+
 # Start Recommendations (You May Also Like Feature) Code
 
 @app.route('/you_may_like', methods=['GET'])
